@@ -98,3 +98,14 @@ def WUDateList(DateList):
         
     def get_num_days(self):
         return self.num_days
+        
+'''
+date_min = Date(10, 11, 2015)
+date_max = Date(10, 31, 2015)
+
+MTA_dates = MTADateList(date_min, date_max)
+WU_dates = WUDateList(date_min, date_max)
+
+MTA_dates.get_date_list()
+WU_dates.get_date_list()
+'''
