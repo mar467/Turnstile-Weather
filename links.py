@@ -31,3 +31,12 @@ class WULink(Link):
         
     def make_url(self):
         pass
+
+class LinkList(object):
+    def __init__(self):
+        self.url_list = []
+        
+    def get_url_list(self):
+        return self.url_list
+        
+    
