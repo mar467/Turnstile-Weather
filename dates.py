@@ -65,13 +65,6 @@ class DateList(object):
         self.date_min = date_min
         self.date_max = date_max
         self.date_list = [] # list of date objects
-        
-    def get_min_date(self): # NOT NECESSARY: no public/private in Python
-        pass
-    def get_max_date(self):  # NOT NECESSARY: no public/private in Python
-        pass
-    def get_date_list(self):  # NOT NECESSARY: no public/private in Python
-        pass
     
 ### since we will be using a range of dates, it will be useful 
 ### to make list of Saturday dates for subsequent indexing when extracting data
@@ -87,9 +80,7 @@ class MTADateList(DateList):
             self.date_list.append(mta_date)
         
         self.num_weeks = len(self.date_list)
-        
-    def get_num_weeks(self): # NOT NECESSARY: no public/private in Python
-        return self.num_weeks
+
         
 def WUDateList(DateList):
     def __init__(self, date_min, date_max, start_yesterday=False):
@@ -108,8 +99,6 @@ def WUDateList(DateList):
             
         self.num_days = len(self.date_list)
         
-    def get_num_days(self): # NOT NECESSARY: no public/private in Python
-        return self.num_days
         
 '''
 date_min = Date(10, 11, 2015)
