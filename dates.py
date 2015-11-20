@@ -78,3 +78,23 @@ class MTADateList(DateList):
         
     def get_num_weeks(self):
         return self.num_weeks
+        
+def WUDateList(DateList):
+    def __init__(self, date_min, date_max, start_yesterday=False):
+        DateList.__init__(self, date_min, date_max)
+        wu_date = WUDate(self.date_min)
+        
+        # may be useful to start one day early to get 11:51 pm reading
+        if start_yesterday:
+            wu_date.make_yesterday()
+            
+        self.date_list.append(wu_date)
+        
+        while wu_date.get_date() <= date_max.get_date():
+            wu_date.make_tomorrow()
+            self.date_list.append(wu_date)
+            
+        self.num_days = len(self.date_list)
+        
+    def get_num_days(self):
+        return self.num_days
