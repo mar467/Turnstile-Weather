@@ -20,7 +20,14 @@ class MTALink(Link):
         self.date = subway_date
         self.make_url()
         
-    def make_url():
+    def make_url(self):
         pass # will need to use subway_date.get_[day, month, year]()
     
+class WULink(Link):
+    def __init__(self, weather_date):
+        Link.__init__(self)
+        self.date = weather_date
+        self.make_url()
         
+    def make_url(self):
+        pass
