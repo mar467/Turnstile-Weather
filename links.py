@@ -46,8 +46,14 @@ class MTALinkList(LinkList):
         self.make_url_list()
         
     def make_url_list(self):
-        pass # makes list of MTALink objects
+        pass # makes list of MTALink objects... calls on MTALink
         
-
-    
+class WULinkList(LinkList):
+    def __init__(self, wu_date_list):
+        LinkList.__init__(self)
+        self.date_list = wu_date_list
+        self.make_url_list()
+        
+    def make_url_list(self):
+        pass
     
