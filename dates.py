@@ -46,3 +46,17 @@ class WUDate(Date):
     def make_yesterday():
         pass
     
+class DateList(object):
+    def __init__(self, date_min, date_max): # takes in two date objects
+        self.date_min = date_min
+        self.date_max = date_max
+        self.date_list = [] # list of date objects
+        
+    def get_min_date():
+        pass
+    def get_max_date():
+        pass
+    def get_date_list():
+        pass
+    
+    
