@@ -5,7 +5,7 @@ Created on Fri Nov 20 07:30:39 2015
 @author: moizr_000
 """
 
-from datetime import date
+from datetime import date, timedelta
 
 class Date(object):
     def __init__(self, month, day, year):
@@ -22,6 +22,8 @@ class Date(object):
         return self.date.month
     def get_year(self):
         return self.date.year
+    def get_day_of_week(self): # 1 is Mon, 7 is Sun
+        return self.date.isoweekday()
 
 # MTA stands for Metro Transit Authority   
 class MTADate(Date):
@@ -31,7 +33,11 @@ class MTADate(Date):
         
     # MTA API only provides data on a weekly basis, corresponding to Saturday dates   
     def make_Saturday(self):
-        pass
+        days_to_add = 6 - self.get_day_of_week()
+        if days_to_add == -1:
+            days_to_add = 6
+        delta_days = timedelta(days=days_to_add)
+        self.date = self.date + delta_days
     def make_next_Saturday(self):
         pass
     def make_last_Saturday(self):
