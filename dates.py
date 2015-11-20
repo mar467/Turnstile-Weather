@@ -38,10 +38,16 @@ class MTADate(Date):
             days_to_add = 6
         delta_days = timedelta(days=days_to_add)
         self.date = self.date + delta_days
+    def is_Saturday(self):
+        return self.get_day_of_week() == 6
     def make_next_Saturday(self):
-        pass
+        if not self.is_Saturday():
+            self.make_Saturday()
+        self.date = self.date + timedelta(days=7)
     def make_last_Saturday(self):
-        pass
+        if not self.isSaturday():
+            self.make_Saturday()
+        self.date = self.date - timedelta(days=7)
         
 # WU stands for Weather Underground
 class WUDate(Date):
