@@ -56,9 +56,9 @@ class WUDate(Date):
        
     # WU API provides data on daily basis   
     def make_tomorrow(self):
-        pass
+        self.date + timedelta(days=1)
     def make_yesterday(self):
-        pass
+        self.date - timedelta(days=1)
     
 class DateList(object):
     def __init__(self, date_min, date_max): # takes in two date objects
