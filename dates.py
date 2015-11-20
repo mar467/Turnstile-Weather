@@ -14,13 +14,13 @@ class Date(object):
         
     def make_date(day, month, year): 
         pass
-    def get_date(self): 
+    def get_date(self):  # NOT NECESSARY: no public/private in Python
         pass
-    def get_day(self): 
+    def get_day(self): # necessary, because not attributes
         pass
-    def get_month(self):
+    def get_month(self): # necessary, because not attributes
         pass
-    def get_year(self):
+    def get_year(self): # necessary, because not attributes
         pass
 
 # MTA stands for Metro Transit Authority   
@@ -54,11 +54,11 @@ class DateList(object):
         self.date_max = date_max
         self.date_list = [] # list of date objects
         
-    def get_min_date(self):
+    def get_min_date(self): # NOT NECESSARY: no public/private in Python
         pass
-    def get_max_date(self):
+    def get_max_date(self):  # NOT NECESSARY: no public/private in Python
         pass
-    def get_date_list(self):
+    def get_date_list(self):  # NOT NECESSARY: no public/private in Python
         pass
     
 ### since we will be using a range of dates, it will be useful 

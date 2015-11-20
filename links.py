@@ -11,7 +11,7 @@ class Link(object):
     def __init__(self):
         self.url = ""
         
-    def get_url(self):
+    def get_url(self): # NOT NECESSARY: no public/private in Python
         return self.url
         
 class MTALink(Link):
@@ -36,7 +36,7 @@ class LinkList(object): # NOT a link"ed" list, just a list of URL strings
     def __init__(self):
         self.url_list = []
         
-    def get_url_list(self):
+    def get_url_list(self): # NOT NECESSARY: no public/private in Python
         return self.url_list
         
 class MTALinkList(LinkList):
