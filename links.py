@@ -15,28 +15,39 @@ class Link(object):
         return self.url
         
 class MTALink(Link):
-    def __init__(self, subway_date):
+    def __init__(self, mta_date):
         Link.__init__(self)
-        self.date = subway_date
+        self.date = mta_date
         self.make_url()
         
     def make_url(self):
         pass # will need to use subway_date.get_[day, month, year]()
     
 class WULink(Link):
-    def __init__(self, weather_date):
+    def __init__(self, wu_date):
         Link.__init__(self)
-        self.date = weather_date
+        self.date = wu_date
         self.make_url()
         
     def make_url(self):
         pass
 
-class LinkList(object):
+class LinkList(object): # NOT a link"ed" list, just a list of URL strings
     def __init__(self):
         self.url_list = []
         
     def get_url_list(self):
         return self.url_list
         
+class MTALinkList(LinkList):
+    def __init__(self, mta_date_list):
+        LinkList.__init__(self)
+        self.date_list = mta_date_list
+        self.make_url_list()
+        
+    def make_url_list(self):
+        pass # makes list of MTALink objects
+        
+
+    
     
