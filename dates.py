@@ -20,4 +20,19 @@ class Date(object):
         pass
     def get_year():
         pass
+
+# MTA stands for Metro Transit Authority   
+class MTADate(Date):
+    def __init__(self, month, day, year):
+        Date.__init__(self, month, day, year)
+        self.make_Saturday()
         
+    # MTA only provides data on a weekly basis, corresponding to Saturday dates   
+    def make_Saturday():
+        pass
+    def make_next_Saturday():
+        pass
+    def make_last_Saturday():
+        pass
+        
+    
