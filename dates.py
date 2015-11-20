@@ -5,23 +5,23 @@ Created on Fri Nov 20 07:30:39 2015
 @author: moizr_000
 """
 
+from datetime import date
+
 class Date(object):
     def __init__(self, month, day, year):
         # month, day, year not included as attributes because liable to change frequently
-        # instead, will use datetime objects
+        # instead, will use datetime.date objects
         self.date = self.make_date(month, day, year)
         self.original_date = self.date
         
-    def make_date(day, month, year): 
-        pass
-    def get_date(self):  # NOT NECESSARY: no public/private in Python
-        pass
-    def get_day(self): # necessary, because not attributes
-        pass
-    def get_month(self): # necessary, because not attributes
-        pass
-    def get_year(self): # necessary, because not attributes
-        pass
+    def make_date(self, month, day, year): 
+        self.date = date(year, month, day)
+    def get_day(self):
+        return self.date.day
+    def get_month(self):
+        return self.date.month
+    def get_year(self):
+        return self.date.year
 
 # MTA stands for Metro Transit Authority   
 class MTADate(Date):
