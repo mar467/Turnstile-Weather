@@ -27,7 +27,7 @@ class MTADate(Date):
         Date.__init__(self, month, day, year)
         self.make_Saturday()
         
-    # MTA only provides data on a weekly basis, corresponding to Saturday dates   
+    # MTA API only provides data on a weekly basis, corresponding to Saturday dates   
     def make_Saturday():
         pass
     def make_next_Saturday():
@@ -35,4 +35,14 @@ class MTADate(Date):
     def make_last_Saturday():
         pass
         
+# WU stands for Weather Underground
+class WUDate(Date):
+    def __init__(self, month, day, year):
+        Date.__init__(self, month, day, year)
+       
+    # WU API provides data on daily basis   
+    def make_tomorrow():
+        pass
+    def make_yesterday():
+        pass
     
