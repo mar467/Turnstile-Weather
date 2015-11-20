@@ -70,13 +70,13 @@ class MTADateList(DateList):
         
         self.date_list.append(mta_date)
         
-        while mta_date.get_date() <= date_max.get_date():
+        while mta_date.date <= date_max.date:
             mta_date.make_next_Saturday()
             self.date_list.append(mta_date)
         
         self.num_weeks = len(self.date_list)
         
-    def get_num_weeks(self):
+    def get_num_weeks(self): # NOT NECESSARY: no public/private in Python
         return self.num_weeks
         
 def WUDateList(DateList):
@@ -90,13 +90,13 @@ def WUDateList(DateList):
             
         self.date_list.append(wu_date)
         
-        while wu_date.get_date() <= date_max.get_date():
+        while wu_date.date <= date_max.date:
             wu_date.make_tomorrow()
             self.date_list.append(wu_date)
             
         self.num_days = len(self.date_list)
         
-    def get_num_days(self):
+    def get_num_days(self): # NOT NECESSARY: no public/private in Python
         return self.num_days
         
 '''
