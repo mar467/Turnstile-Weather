@@ -18,11 +18,10 @@ class MTALink(Link):
         self.make_url()
         
     def make_url(self):
-        day = str(self.date.get_day())
-        month = str(self.date.get_month())
-        year = str(self.date.get_year())[2:]
-        "http://web.mta.info/developers/data/nyct/turnstile/turnstile_1510"+str(day)+".txt"
-        pass # will need to use subway_date.get_[day, month, year]()
+        day = self.date.get_day_str()
+        month = self.date.get_month_str()
+        year = self.date.get_abbrev_year_str()
+        self.url = "http://web.mta.info/developers/data/nyct/turnstile/turnstile_"+year+month+day+".txt"
     
 class WULink(Link):
     def __init__(self, wu_date):
