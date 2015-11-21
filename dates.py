@@ -99,7 +99,7 @@ class MTADateList(DateList):
         return len(self.date_list)
 
         
-def WUDateList(DateList):
+class WUDateList(DateList):
     def __init__(self, date_min_obj, date_max_obj, start_yesterday=False):
         DateList.__init__(self, date_min_obj, date_max_obj)
         self.make_date_list(start_yesterday)
