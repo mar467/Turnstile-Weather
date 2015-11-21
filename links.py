@@ -36,27 +36,27 @@ class WUEasyLink(EasyLink):
 
 class EasyLinkList(object): # NOT a link"ed" list, just a list of URL strings
     def __init__(self):
-        self.url_list = []
+        self.ezlink_list = []
 
         
 class MTAEasyLinkList(EasyLinkList):
     def __init__(self, mta_ezdate_list):
         EasyLinkList.__init__(self)
         self.list_of_ezdates = mta_ezdate_list.ezdate_list
-        self.make_url_list()
+        self.make_ezlink_list()
         
-    def make_url_list(self):
+    def make_ezlink_list(self):
         for ezdate in self.list_of_ezdates:
-            self.url_list.append(MTAEasyLink(ezdate))
+            self.ezlink_list.append(MTAEasyLink(ezdate))
         
 class WUEasyLinkList(EasyLinkList):
     def __init__(self, wu_ezdate_list, location='KNYC'):
         EasyLinkList.__init__(self)
         self.list_of_ezdates = wu_ezdate_list.ezdate_list
         self.location = location
-        self.make_url_list()
+        self.make_ezlink_list()
         
-    def make_url_list(self):
+    def make_ezlink_list(self):
         for ezdate in self.list_of_ezdates:
-            self.url_list.append(WUEasyLink(ezdate, self.location))
+            self.ezlink_list.append(WUEasyLink(ezdate, self.location))
     
