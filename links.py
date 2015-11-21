@@ -11,9 +11,6 @@ class Link(object):
     def __init__(self):
         self.url = ""
         
-    def get_url(self): # NOT NECESSARY: no public/private in Python
-        return self.url
-        
 class MTALink(Link):
     def __init__(self, mta_date):
         Link.__init__(self)
