@@ -11,7 +11,7 @@ class Date(object):
     def __init__(self, month, day, year):
         # month, day, year not included as attributes because liable to change frequently
         # instead, will use datetime.date objects
-        self.date = self.make_date(month, day, year)
+        self.make_date(month, day, year)
         self.original_date = self.date
         
     def make_date(self, month, day, year): 
