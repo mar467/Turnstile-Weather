@@ -18,10 +18,26 @@ class Date(object):
         self.date = date(year, month, day)
     def get_day(self):
         return self.date.day
+    def get_day_str(self):
+        day = self.get_day()
+        day_str = str(day)
+        if day < 10:
+            day_str = '0'+day_str
+        return day_str
     def get_month(self):
         return self.date.month
+    def get_month_str(self):
+        month = self.get_month()
+        month_str = str(month)
+        if month < 12:
+            month_str = '0'+day_str
+        return month_str
     def get_year(self):
         return self.date.year
+    def get_year_str(self):
+        return str(self.get_year())
+    def get_abbrev_year_str(self):
+        return self.get_year_str()[-2:]
     def get_day_of_week(self): # 1 is Mon, 7 is Sun
         return self.date.isoweekday()
 
