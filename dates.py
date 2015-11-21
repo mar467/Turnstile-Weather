@@ -7,7 +7,7 @@ Created on Fri Nov 20 07:30:39 2015
 
 from datetime import date, timedelta
 
-class Date(object):
+class EasyDate(object):
     def __init__(self, datetime_date_obj):
         self.date = datetime_date_obj
         self.original_date = self.date
@@ -39,9 +39,9 @@ class Date(object):
         return self.date.isoweekday()
 
 # MTA stands for Metro Transit Authority   
-class MTADate(Date):
+class MTAEasyDate(EasyDate):
     def __init__(self, datetime_date_obj):
-        Date.__init__(self, datetime_date_obj)
+        EasyDate.__init__(self, datetime_date_obj)
         self.make_this_Saturday()
         
     # MTA API only provides data on a weekly basis, corresponding to Saturday dates   
@@ -63,9 +63,9 @@ class MTADate(Date):
         self.date = self.date - timedelta(days=7)
         
 # WU stands for Weather Underground
-class WUDate(Date):
+class WUEasyDate(EasyDate):
     def __init__(self, datetime_date_obj):
-        Date.__init__(self, datetime_date_obj)
+        EasyDate.__init__(self, datetime_date_obj)
        
     # WU API provides data on daily basis   
     def make_tomorrow(self):
@@ -73,49 +73,49 @@ class WUDate(Date):
     def make_yesterday(self):
         self.date - timedelta(days=1)
     
-class DateList(object):
+class EasyDateList(object):
     def __init__(self, date_min_obj, date_max_obj): # takes in two date objects
-        self.date_min = date_min_obj
-        self.date_max = date_max_obj
-        self.date_list = [] # list of date objects
+        self.ezdate_min = date_min_obj
+        self.ezdate_max = date_max_obj
+        self.ezdate_list = [] # list of date objects
     
 ### since we will be using a range of dates, it will be useful 
 ### to make list of Saturday dates for subsequent indexing when extracting data
-class MTADateList(DateList):
-    def __init__(self, date_min_obj, date_max_obj):
-        DateList.__init__(self, date_min_obj, date_max_obj)
-        self.make_date_list()
+class MTAEasyDateList(EasyDateList):
+    def __init__(self, ezdate_min, ezdate_max):
+        EasyDateList.__init__(self, ezdate_min, ezdate_max)
+        self.make_ezdate_list()
         
-    def make_date_list(self):
-        mta_date = MTADate(self.date_min.date) # initializes to Saturday
+    def make_ezdate_list(self):
+        mta_ezdate = MTAEasyDate(self.ezdate_min.date) # initializes to Saturday
         
-        self.date_list.append(mta_date)
+        self.ezdate_list.append(mta_ezdate)
         
-        while mta_date.date <= self.date_max.date:
-            mta_date.make_next_Saturday()
-            self.date_list.append(mta_date)
+        while mta_ezdate.date <= self.ezdate_max.date:
+            mta_ezdate.make_next_Saturday()
+            self.ezdate_list.append(mta_ezdate)
             
     def get_num_weeks(self):
-        return len(self.date_list)
+        return len(self.ezdate_list)
 
         
-class WUDateList(DateList):
-    def __init__(self, date_min_obj, date_max_obj, start_yesterday=False):
-        DateList.__init__(self, date_min_obj, date_max_obj)
-        self.make_date_list(start_yesterday)
+class WUEasyDateList(EasyDateList):
+    def __init__(self, ezdate_min, ezdate_max, start_yesterday=False):
+        EasyDateList.__init__(self, ezdate_min, ezdate_max)
+        self.make_ezdate_list(start_yesterday)
 
-    def make_date_list(self, start_yesterday):
-        wu_date = WUDate(self.date_min.date)
+    def make_ezdate_list(self, start_yesterday):
+        wu_ezdate = WUEasyDate(self.ezdate_min.date)
         
         # may be useful to start one day early to get 11:51 pm reading
         if start_yesterday:
-           wu_date.make_yesterday()
+           wu_ezdate.make_yesterday()
             
-        self.date_list.append(wu_date)
+        self.ezdate_list.append(wu_ezdate)
         
-        while wu_date.date <= self.date_max.date:
-            wu_date.make_tomorrow()
-            self.date_list.append(wu_date)
+        while wu_ezdate.date <= self.ezdate_max.date:
+            wu_ezdate.make_tomorrow()
+            self.ezdate_list.append(wu_ezdate)
             
     def get_num_days(self):
         return len(self.date_list)
