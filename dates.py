@@ -92,7 +92,7 @@ class MTAEasyDateList(EasyDateList):
         
         self.ezdate_list.append(mta_ezdate)
         
-        while mta_ezdate.date <= self.ezdate_max.date:
+        while mta_ezdate.date < self.ezdate_max.date:
             mta_ezdate = mta_ezdate.next_Saturday()
             self.ezdate_list.append(mta_ezdate)
             
@@ -114,7 +114,7 @@ class WUEasyDateList(EasyDateList):
             
         self.ezdate_list.append(wu_ezdate)
         
-        while wu_ezdate.date <= self.ezdate_max.date:
+        while wu_ezdate.date < self.ezdate_max.date - timedelta(days=1):
             wu_ezdate = wu_ezdate.tomorrow()
             self.ezdate_list.append(wu_ezdate)
             
