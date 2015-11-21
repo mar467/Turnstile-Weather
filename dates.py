@@ -30,7 +30,7 @@ class Date(object):
         month = self.get_month()
         month_str = str(month)
         if month < 12:
-            month_str = '0'+day_str
+            month_str = '0'+month_str
         return month_str
     def get_year(self):
         return self.date.year
