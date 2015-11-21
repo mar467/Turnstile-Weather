@@ -74,9 +74,9 @@ class WUEasyDate(EasyDate):
         self.date - timedelta(days=1)
     
 class EasyDateList(object):
-    def __init__(self, date_min_obj, date_max_obj): # takes in two date objects
-        self.ezdate_min = date_min_obj
-        self.ezdate_max = date_max_obj
+    def __init__(self, ezdate_min, ezdate_max): # takes in two date objects
+        self.ezdate_min = ezdate_min
+        self.ezdate_max = ezdate_max
         self.ezdate_list = [] # list of date objects
     
 ### since we will be using a range of dates, it will be useful 
