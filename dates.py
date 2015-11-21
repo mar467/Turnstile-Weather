@@ -87,21 +87,34 @@ class DateList(object):
 class MTADateList(DateList):
     def __init__(self, date_min, date_max):
         DateList.__init__(self, date_min, date_max)
-        mta_date = MTADate(self.date_min) # initializes to Saturday
+        self.make_date_list()
+        
+    def make_date_list(self):
+        day = self.date_min.get_month()
+        month = self.date_min.get_month()
+        year = self.date_min.get_year()
+        mta_date = MTADate(month, day, year) # initializes to Saturday
         
         self.date_list.append(mta_date)
         
-        while mta_date.date <= date_max.date:
+        while mta_date.date <= self.date_max.date:
             mta_date.make_next_Saturday()
             self.date_list.append(mta_date)
-        
-        self.num_weeks = len(self.date_list)
+            
+    def get_num_weeks(self):
+        return len(self.date_list)
 
         
 def WUDateList(DateList):
     def __init__(self, date_min, date_max, start_yesterday=False):
         DateList.__init__(self, date_min, date_max)
-        wu_date = WUDate(self.date_min)
+        self.make_date_list(start_yesterday)
+
+    def make_date_list(self, start_yesterday):
+        day = self.date_min.get_month()
+        month = self.date_min.get_month()
+        year = self.date_min.get_year()
+        wu_date = WUDate(month, day, year)
         
         # may be useful to start one day early to get 11:51 pm reading
         if start_yesterday:
@@ -109,11 +122,12 @@ def WUDateList(DateList):
             
         self.date_list.append(wu_date)
         
-        while wu_date.date <= date_max.date:
+        while wu_date.date <= self.date_max.date:
             wu_date.make_tomorrow()
             self.date_list.append(wu_date)
             
-        self.num_days = len(self.date_list)
+    def get_num_days(self):
+        return len(self.date_list)
         
         
 '''
