@@ -42,23 +42,23 @@ class LinkList(object): # NOT a link"ed" list, just a list of URL strings
 
         
 class MTALinkList(LinkList):
-    def __init__(self, mta_date_list):
+    def __init__(self, mta_date_list_obj):
         LinkList.__init__(self)
-        self.date_list = mta_date_list
+        self.list_of_dates = mta_date_list_obj.date_list
         self.make_url_list()
         
     def make_url_list(self):
-        for date in self.date_list:
+        for date in self.list_of_dates:
             self.url_list.append(MTALink(date))
         
 class WULinkList(LinkList):
-    def __init__(self, wu_date_list, location='KNYC'):
+    def __init__(self, wu_date_list_obj, location='KNYC'):
         LinkList.__init__(self)
-        self.date_list = wu_date_list
+        self.list_of_dates = wu_date_list_obj.date_list
         self.location = location
         self.make_url_list()
         
     def make_url_list(self):
-        for date in self.date_list:
+        for date in self.list_of_dates:
             self.url_list.append(WULink(date, self.location))
     
