@@ -24,13 +24,17 @@ class MTALink(Link):
         self.url = "http://web.mta.info/developers/data/nyct/turnstile/turnstile_"+year+month+day+".txt"
     
 class WULink(Link):
-    def __init__(self, wu_date):
+    def __init__(self, wu_date, location="KNYC"):
         Link.__init__(self)
         self.date = wu_date
+        self.location = location
         self.make_url()
         
     def make_url(self):
-        pass
+        day = self.date.get_day_str()
+        month = self.date.get_month_str()
+        year = self.date.get_year_str()
+        self.url = "http://www.wunderground.com/history/airport/"+location+"/"+year+"/"+month+"/"+day+"/DailyHistory.html?req_city=New+York&req_state=NY&req_statename=New+York&reqdb.zip=10002&reqdb.magic=5&reqdb.wmo=99999&MR=1&format=1"
 
 class LinkList(object): # NOT a link"ed" list, just a list of URL strings
     def __init__(self):
