@@ -34,14 +34,12 @@ class WULink(Link):
         day = self.date.get_day_str()
         month = self.date.get_month_str()
         year = self.date.get_year_str()
-        self.url = "http://www.wunderground.com/history/airport/"+location+"/"+year+"/"+month+"/"+day+"/DailyHistory.html?req_city=New+York&req_state=NY&req_statename=New+York&reqdb.zip=10002&reqdb.magic=5&reqdb.wmo=99999&MR=1&format=1"
+        self.url = "http://www.wunderground.com/history/airport/"+self.location+"/"+year+"/"+month+"/"+day+"/DailyHistory.html?req_city=New+York&req_state=NY&req_statename=New+York&reqdb.zip=10002&reqdb.magic=5&reqdb.wmo=99999&MR=1&format=1"
 
 class LinkList(object): # NOT a link"ed" list, just a list of URL strings
     def __init__(self):
         self.url_list = []
-        
-    def get_url_list(self): # NOT NECESSARY: no public/private in Python
-        return self.url_list
+
         
 class MTALinkList(LinkList):
     def __init__(self, mta_date_list):
@@ -50,14 +48,17 @@ class MTALinkList(LinkList):
         self.make_url_list()
         
     def make_url_list(self):
-        pass # makes list of MTALink objects... calls on MTALink
+        for date in self.date_list:
+            self.url_list.append(MTALink(date))
         
 class WULinkList(LinkList):
-    def __init__(self, wu_date_list):
+    def __init__(self, wu_date_list, location='KNYC'):
         LinkList.__init__(self)
         self.date_list = wu_date_list
+        self.location = location
         self.make_url_list()
         
     def make_url_list(self):
-        pass
+        for date in self.date_list:
+            self.url_list.append(WULink(date, self.location))
     
