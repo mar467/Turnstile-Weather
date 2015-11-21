@@ -7,15 +7,12 @@ Created on Fri Nov 20 07:30:39 2015
 
 from datetime import date, timedelta
 
-class NumToDate(object):
-    def __init__(self, month, day, year):
-        self.date = date(year, month, day)
-
 class Date(object):
-    def __init__(self, date):
-        self.date = date
+    def __init__(self, datetime_date_obj):
+        self.date = datetime_date_obj
         self.original_date = self.date
-        
+    
+    # not a pointless getter function, because we're accessing an attribute's attribute  
     def get_day(self):
         return self.date.day
     def get_day_str(self):
@@ -43,8 +40,8 @@ class Date(object):
 
 # MTA stands for Metro Transit Authority   
 class MTADate(Date):
-    def __init__(self, date):
-        Date.__init__(self, date)
+    def __init__(self, datetime_date_obj):
+        Date.__init__(self, datetime_date_obj)
         self.make_this_Saturday()
         
     # MTA API only provides data on a weekly basis, corresponding to Saturday dates   
@@ -67,8 +64,8 @@ class MTADate(Date):
         
 # WU stands for Weather Underground
 class WUDate(Date):
-    def __init__(self, date):
-        Date.__init__(self, date)
+    def __init__(self, datetime_date_obj):
+        Date.__init__(self, datetime_date_obj)
        
     # WU API provides data on daily basis   
     def make_tomorrow(self):
@@ -77,16 +74,16 @@ class WUDate(Date):
         self.date - timedelta(days=1)
     
 class DateList(object):
-    def __init__(self, date_min, date_max): # takes in two date objects
-        self.date_min = date_min
-        self.date_max = date_max
+    def __init__(self, date_min_obj, date_max_obj): # takes in two date objects
+        self.date_min = date_min_obj
+        self.date_max = date_max_obj
         self.date_list = [] # list of date objects
     
 ### since we will be using a range of dates, it will be useful 
 ### to make list of Saturday dates for subsequent indexing when extracting data
 class MTADateList(DateList):
-    def __init__(self, date_min, date_max):
-        DateList.__init__(self, date_min, date_max)
+    def __init__(self, date_min_obj, date_max_obj):
+        DateList.__init__(self, date_min_obj, date_max_obj)
         self.make_date_list()
         
     def make_date_list(self):
@@ -103,8 +100,8 @@ class MTADateList(DateList):
 
         
 def WUDateList(DateList):
-    def __init__(self, date_min, date_max, start_yesterday=False):
-        DateList.__init__(self, date_min, date_max)
+    def __init__(self, date_min_obj, date_max_obj, start_yesterday=False):
+        DateList.__init__(self, date_min_obj, date_max_obj)
         self.make_date_list(start_yesterday)
 
     def make_date_list(self, start_yesterday):
@@ -112,7 +109,7 @@ def WUDateList(DateList):
         
         # may be useful to start one day early to get 11:51 pm reading
         if start_yesterday:
-            wu_date.make_yesterday()
+           wu_date.make_yesterday()
             
         self.date_list.append(wu_date)
         
