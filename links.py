@@ -59,4 +59,26 @@ class WUEasyLinkList(EasyLinkList):
     def make_ezlink_list(self):
         for ezdate in self.list_of_ezdates:
             self.ezlink_list.append(WUEasyLink(ezdate, self.location))
+
+
+'''
+
+import datetime
+import dates
+
+dt_min = datetime.date(2015, 10, 11)
+dt_max = datetime.date(2015, 10, 31)
+
+ezdate_min = dates.EasyDate(dt_min)
+ezdate_max = dates.EasyDate(dt_max)
+
+MTA_ezdates = dates.MTAEasyDateList(ezdate_min, ezdate_max)
+WU_ezdates = dates.WUEasyDateList(ezdate_min, ezdate_max)
+
+MTA_ezlinks = links.MTAEasyLinkList(MTA_ezdates)
+WU_ezlinks = links.WUEasyLinkList(WU_ezdates)
+
+for ezlink in MTA_ezlinks.ezlink_list:
+    print ezlink.url
     
+'''
