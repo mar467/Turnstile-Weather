@@ -7,15 +7,15 @@ Created on Fri Nov 20 07:30:39 2015
 
 from datetime import date, timedelta
 
-class Date(object):
+class NumToDate(object):
     def __init__(self, month, day, year):
-        # month, day, year not included as attributes because liable to change frequently
-        # instead, will use datetime.date objects
-        self.make_date(month, day, year)
+        self.date = date(year, month, day)
+
+class Date(object):
+    def __init__(self, date):
+        self.date = date
         self.original_date = self.date
         
-    def make_date(self, month, day, year): 
-        self.date = date(year, month, day)
     def get_day(self):
         return self.date.day
     def get_day_str(self):
@@ -43,8 +43,8 @@ class Date(object):
 
 # MTA stands for Metro Transit Authority   
 class MTADate(Date):
-    def __init__(self, month, day, year):
-        Date.__init__(self, month, day, year)
+    def __init__(self, date):
+        Date.__init__(self, date)
         self.make_this_Saturday()
         
     # MTA API only provides data on a weekly basis, corresponding to Saturday dates   
@@ -67,8 +67,8 @@ class MTADate(Date):
         
 # WU stands for Weather Underground
 class WUDate(Date):
-    def __init__(self, month, day, year):
-        Date.__init__(self, month, day, year)
+    def __init__(self, date):
+        Date.__init__(self, date)
        
     # WU API provides data on daily basis   
     def make_tomorrow(self):
@@ -90,10 +90,7 @@ class MTADateList(DateList):
         self.make_date_list()
         
     def make_date_list(self):
-        day = self.date_min.get_month()
-        month = self.date_min.get_month()
-        year = self.date_min.get_year()
-        mta_date = MTADate(month, day, year) # initializes to Saturday
+        mta_date = MTADate(self.date_min.date) # initializes to Saturday
         
         self.date_list.append(mta_date)
         
@@ -111,10 +108,7 @@ def WUDateList(DateList):
         self.make_date_list(start_yesterday)
 
     def make_date_list(self, start_yesterday):
-        day = self.date_min.get_month()
-        month = self.date_min.get_month()
-        year = self.date_min.get_year()
-        wu_date = WUDate(month, day, year)
+        wu_date = WUDate(self.date_min.date)
         
         # may be useful to start one day early to get 11:51 pm reading
         if start_yesterday:
