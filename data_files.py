@@ -34,11 +34,19 @@ class MTAMasterFileWriter(MasterFileWriter):
     ###
      
     def _first_n_scps(master_file, f_ins, num_scps): # scp = sub channel position (turnstile unit identifier)
+        '''
+        This specific solution avoids using x = file.tell() or file.seek(x), simply because reading a url file
+        with urlopen won't allow for it. However, using these two methods would have allowed me flexibility in,
+        say, obtaining data only from Times Square, or another location. An alternative could be to read each file
+        entirely to a local file first, and then apply these methods, but because each file contains 190,000+
+        rows of data, in the interest of time and memory, I opted against it. The present solution reads the url
+        file one line at a time in order until a certain condition (max num of turnstile units) is reached.
+        '''
 
         last_lines = []
         
         for f_in in f_ins:
-            header = f_in.readline() # skip over first line in each files
+            header = f_in.readline() # skip over first line in each file
             last_lines.append(f_in.readline()) # initialize last lines list with first non-header line of each file
             
         master_file.write(header) # write the header just once
