@@ -19,8 +19,8 @@ class MTAMasterFileWriter(MasterFileWriter):
         MasterFileWriter.__init__(self, filename)
         
         self._f_ins = [] # list of read files
-        for ezlink in mta_ezlink_list.ezlink_list:
-            self._f_ins.append(urlopen(ezlink.url))
+        for mta_ezlink in mta_ezlink_list.ezlink_list:
+            self._f_ins.append(urlopen(mta_ezlink.url))
         
         with open(self._filename, 'w') as master_file:
             self._first_n_scps(master_file, self._f_ins, num_scps)
@@ -67,3 +67,33 @@ class MTAMasterFileWriter(MasterFileWriter):
                 last_lines[i] = curr_line # record the line of the first new turnstile unit
                 # repeat the process for next file
             scp_num += 1
+            
+        for f_in in f_ins:
+            f_in.close()
+            
+            
+class WUMasterFileWriter(MasterFileWriter):
+    def __init__(self, wu_ezlink_list, filename='WU_master_file'):
+        MasterFileWriter.__init__(self, filename)
+        
+        self._f_ins = [] # list of read files
+        for wu_ezlink in wu_ezlink_list.ezlink_list:
+            self._f_ins.append(urlopen(wu_ezlink.url))
+            
+        with open(self._filename, 'w') as master_file:
+            self._make_file(master_file, self._f_ins)
+
+    ###
+        # much simpler
+        # can just be writen in entirely (excepting header) one at a time to master file
+    ###    
+    
+    def _make_file(self, master_file, f_ins):
+        header = f_ins[0].readline()
+        master_file.write(header)
+        
+        for f_in in f_ins: # for each file...
+            read_file = f_in.readlines()[2:] # skip header and first empty line
+            for line in read_file:
+                master_file.write(line) # and write all the lines to the master file
+            f_in.close()
