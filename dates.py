@@ -26,7 +26,7 @@ class EasyDate(object):
     def get_month_str(self):
         month = self.get_month()
         month_str = str(month)
-        if month < 12:
+        if month < 10:
             month_str = '0'+month_str
         return month_str
     def get_year(self):
