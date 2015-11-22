@@ -42,10 +42,10 @@ class EasyDate(object):
 class MTAEasyDate(EasyDate):
     def __init__(self, datetime_date_obj):
         EasyDate.__init__(self, datetime_date_obj)
-        self.make_this_Saturday()
+        self._make_this_Saturday()
         
     # MTA API only provides data on a weekly basis, corresponding to Saturday dates   
-    def make_this_Saturday(self):
+    def _make_this_Saturday(self):
         days_to_add = 6 - self.get_day_of_week()
         if days_to_add == -1:
             days_to_add = 6
@@ -85,9 +85,9 @@ class EasyDateList(object):
 class MTAEasyDateList(EasyDateList):
     def __init__(self, ezdate_min, ezdate_max):
         EasyDateList.__init__(self, ezdate_min, ezdate_max)
-        self.make_ezdate_list()
+        self._make_ezdate_list()
         
-    def make_ezdate_list(self):
+    def _make_ezdate_list(self):
         mta_ezdate = MTAEasyDate(self.ezdate_min.date) # initializes to Saturday
         
         self.ezdate_list.append(mta_ezdate)
@@ -103,9 +103,9 @@ class MTAEasyDateList(EasyDateList):
 class WUEasyDateList(EasyDateList):
     def __init__(self, ezdate_min, ezdate_max, start_yesterday=False):
         EasyDateList.__init__(self, ezdate_min, ezdate_max)
-        self.make_ezdate_list(start_yesterday)
+        self._make_ezdate_list(start_yesterday)
 
-    def make_ezdate_list(self, start_yesterday):
+    def _make_ezdate_list(self, start_yesterday):
         wu_ezdate = WUEasyDate(self.ezdate_min.date)
         
         # may be useful to start one day early to get 11:51 pm reading
