@@ -31,3 +31,21 @@ class MTADataFrame(DataFrame):
     def _clean_up(self):
         pass
     
+class WUDataFrame(DataFrame):
+    def __init__(self, csv_filepath):
+        DataFrame.__init__(self, csv_filepath)
+        self._make_datetime_col()
+        self._clean_up()
+        
+    def _make_datetime_col(self):
+        pass
+    
+    def _clean_up(self):
+        pass
+    
+    def find_closest_wu_datetime(datetime):
+        pass
+    
+'''
+Access csv_filepath of MasterFile written object via xxx.get_path()
+'''
