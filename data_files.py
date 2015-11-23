@@ -89,11 +89,12 @@ class WUMasterFileWriter(MasterFileWriter):
     ###    
     
     def _make_file(self, master_file, f_ins):
-        header = f_ins[0].readline()
-        master_file.write(header)
-        
+        first = True        
         for f_in in f_ins: # for each file...
-            read_file = f_in.readlines()[2:] # skip header and first empty line
-            for line in read_file:
+            read_file = f_in.readlines()
+            if first:
+                master_file.write(read_file[1]) # skip the empty line, write the header once
+                first = False
+            for line in read_file[2:]:
                 master_file.write(line) # and write all the lines to the master file
             f_in.close()
