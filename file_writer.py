@@ -59,7 +59,11 @@ class MTAMasterFileWriter(MasterFileWriter):
                 prev_line = last_lines[i]
                 curr_line = f_ins[i].readline()
                 
-                while prev_line[0:19] == curr_line[0:19]: # and while still on the same turnstile unit...
+                # finds index location of third coma
+                segs = prev_line.split(",")
+                idx = len(segs[0]+segs[1]+segs[2]) + 3
+                
+                while prev_line[0:idx] == curr_line[0:idx]: # and while still on the same turnstile unit...
                     master_file.write(curr_line) # keep writing lines for this file
                     prev_line = curr_line
                     curr_line = f_ins[i].readline()
