@@ -33,7 +33,7 @@ class MTAMasterFileWriter(MasterFileWriter):
             # and THEN move on to the next turnstile unit
     ###
      
-    def _first_n_scps(master_file, f_ins, num_scps): # scp = sub channel position (turnstile unit identifier)
+    def _first_n_scps(self, master_file, f_ins, num_scps): # scp = sub channel position (turnstile unit identifier)
         '''
         This specific solution avoids using x = file.tell() or file.seek(x), simply because reading a url file
         with urlopen won't allow for it. However, using these two methods would have allowed me flexibility in,
