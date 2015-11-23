@@ -15,7 +15,7 @@ class MasterFileWriter(object):
         pass
     
 class MTAMasterFileWriter(MasterFileWriter):
-    def __init__(self, mta_ezlink_list, filename='MTA_master_file', num_scps=10):
+    def __init__(self, mta_ezlink_list, filename='MTA_master_file.txt', num_scps=10):
         MasterFileWriter.__init__(self, filename)
         
         self._f_ins = [] # list of read files
@@ -73,7 +73,7 @@ class MTAMasterFileWriter(MasterFileWriter):
             
             
 class WUMasterFileWriter(MasterFileWriter):
-    def __init__(self, wu_ezlink_list, filename='WU_master_file'):
+    def __init__(self, wu_ezlink_list, filename='WU_master_file.txt'):
         MasterFileWriter.__init__(self, filename)
         
         self._f_ins = [] # list of read files
