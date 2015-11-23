@@ -6,13 +6,14 @@ Created on Sun Nov 22 10:06:49 2015
 """
 
 from urllib import urlopen
+import os
 
 class MasterFileWriter(object):
     def __init__(self, filename):
         self._filename = filename
         
     def get_path(self):
-        pass
+        return os.path.realpath(self._filename)
     
 class MTAMasterFileWriter(MasterFileWriter):
     def __init__(self, mta_ezlink_list, filename='MTA_master_file.txt', num_scps=10):
