@@ -15,26 +15,31 @@ class DataFrame(object):
 class MTADataFrame(DataFrame):
     def __init__(self, csv_filepath):
         DataFrame.__init__(self, csv_filepath)
+        self._clean_up()
         self._make_datetime_col()
         self._make_hourly_entries_col()
-        self._clean_up()
         self._make_hourly_exits_col()
-
         
+    def _clean_up(self):
+        new_columns = []
+        for i in range(len(self.df.columns)):
+            new_columns.append(self.df.columns[i].strip().title())
+        self.df.columns = new_columns
+
     def _make_datetime_col(self):
         self.df['Subway Datetime'] = pd.Series('', index=self.df.index)
         for row_idx, data_series in self.df.iterrows():
-            datetime_str = data_series["DATE"]+' '+data_series["TIME"]
+            datetime_str = data_series["Date"]+' '+data_series["Time"]
             datetime_obj = datetime.strptime(datetime_str, '%m/%d/%Y %H:%M:%S')
             self.df.loc[row_idx, 'Subway Datetime'] = datetime_obj
         return self
     
     def _make_hourly_entries_col(self):
         hourly_entries = pd.Series(0, index=self.df.index)
-        prev_entries = self.df.loc[0, 'ENTRIES'] # initialize prev_entries to first value in df['ENTRIES']
+        prev_entries = self.df.loc[0, 'Entries'] # initialize prev_entries to first value in df['ENTRIES']
         prev_datetime = self.df.loc[0, 'Subway Datetime'] # same, for first datetime value
         for row_idx, data_series in self.df.iterrows():
-            curr_entries = data_series['ENTRIES']
+            curr_entries = data_series['Entries']
             curr_datetime = data_series['Subway Datetime']
             hours_elapsed = (curr_datetime - prev_datetime).total_seconds()/3600
             if hours_elapsed >= 0: # if still on same turnstile unit (datetimes are increasing)...
@@ -50,10 +55,10 @@ class MTADataFrame(DataFrame):
     
     def _make_hourly_exits_col(self):
         hourly_exits = pd.Series(0, index=self.df.index)
-        prev_exits = self.df.loc[0, 'EXITS']
+        prev_exits = self.df.loc[0, 'Exits']
         prev_datetime = self.df.loc[0, 'Subway Datetime']
         for row_idx, data_series in self.df.iterrows():
-            curr_exits = data_series['EXITS']
+            curr_exits = data_series['Exits']
             curr_datetime = data_series['Subway Datetime']
             hours_elapsed = (curr_datetime - prev_datetime).total_seconds()/3600
             if hours_elapsed >= 0:
@@ -65,10 +70,6 @@ class MTADataFrame(DataFrame):
             prev_datetime = curr_datetime
             
         self.df['Exits Per Hour'] = hourly_exits
-        return self
-    
-    def _clean_up(self):
-        self.df = self.df.rename(columns={'EXITS                                                               ' : 'EXITS'})
         return self
     
     def _fill_nan_with_averages(self):
