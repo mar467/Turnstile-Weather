@@ -48,7 +48,23 @@ class MTADataFrame(DataFrame):
         return self.df
     
     def _make_hourly_exits_col(self):
-        pass
+        hourly_exits = pd.Series(0, index=self.df.index)
+        prev_exits = self.df.loc[0, 'EXITS']
+        prev_datetime = self.df.loc[0, 'Subway Datetime']
+        for row_idx, data_series in self.df.iterrows():
+            curr_exits = data_series['EXITS']
+            curr_datetime = data_series['Subway Datetime']
+            hours_elapsed = (curr_datetime - prev_datetime).total_seconds()/3600
+            if hours_elapsed >= 0:
+                delta_exits = curr_exits - prev_exits
+                hourly_exits[row_idx] = delta_exits/hours_elapsed
+            else:
+                hourly_exits[row_idx] = float('nan')
+            prev_exits = curr_exits
+            prev_datetime = curr_datetime
+            
+        self.df['Exits Per Hour'] = hourly_exits
+        return self.df
     
     def _clean_up(self):
         pass
