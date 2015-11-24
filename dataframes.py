@@ -17,8 +17,9 @@ class MTADataFrame(DataFrame):
         DataFrame.__init__(self, csv_filepath)
         self._make_datetime_col()
         self._make_hourly_entries_col()
-        self._make_hourly_exits_col()
         self._clean_up()
+        self._make_hourly_exits_col()
+
         
     def _make_datetime_col(self):
         self.df['Subway Datetime'] = pd.Series('', index=self.df.index)
@@ -67,7 +68,8 @@ class MTADataFrame(DataFrame):
         return self
     
     def _clean_up(self):
-        pass
+        self.df = self.df.rename(columns={'EXITS                                                               ' : 'EXITS'})
+        return self
     
     def _fill_nan_with_averages(self):
         pass
