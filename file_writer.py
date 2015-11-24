@@ -16,7 +16,7 @@ class MasterFileWriter(object):
         return os.path.realpath(self._filename)
     
 class MTAMasterFileWriter(MasterFileWriter):
-    def __init__(self, mta_ezlink_list, filename='MTA_master_file.txt', num_scps=10):
+    def __init__(self, mta_ezlink_list, filename='MTA_master_file.txt', num_scps=4):
         MasterFileWriter.__init__(self, filename)
         
         self._f_ins = [] # list of read files
