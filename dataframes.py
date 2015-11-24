@@ -5,11 +5,11 @@ Created on Mon Nov 23 11:11:28 2015
 @author: moizr_000
 """
 
-import pandas
+import pandas as pd
 
 class DataFrame(object):
     def __init__(self, csv_filepath):
-        self.df = pandas.read_csv(csv_filepath)
+        self.df = pd.read_csv(csv_filepath)
         
 class MTADataFrame(DataFrame):
     def __init__(self, csv_filepath):
