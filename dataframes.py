@@ -53,6 +53,9 @@ class MTADataFrame(DataFrame):
     def _clean_up(self):
         pass
     
+    def _fill_nan_with_averages(self):
+        pass
+    
 class WUDataFrame(DataFrame):
     def __init__(self, csv_filepath):
         DataFrame.__init__(self, csv_filepath)
