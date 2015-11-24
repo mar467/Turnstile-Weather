@@ -90,8 +90,28 @@ class WUDataFrame(DataFrame):
     def _clean_up(self):
         pass
     
-    def find_closest_wu_datetime(datetime):
-        pass
+    # efficient method of finding closest datetime that does not require searching through all weather datetimes
+    def find_closest_wu_datetime(self, datetime_obj):
+        ''' 
+        The strategy here will be keep calculating the difference between the datetime_obj and the datetimes
+        in the weather dataframe... WHILE the differences are decreasing (i.e.: approaching a local minima).
+        So as soon as the differences start to INCREASE (just passing minima), return the previous index as
+        the closest match. This works because the datetimes in the weather dataframe will always be in increasing
+        descending order. If the datetime_obj is earlier than any weather date, the first index will be returned,
+        and if the datetime_obj is later than any weather date, the last index will be returned.
+        '''
+        # initialize with largest possible difference, to ensure differences at least start by decreasing
+        prev_diff = datetime.max - datetime.min
+        
+        for row_idx, data_series in self.df.iterrows():
+            new_diff = abs(datetime_obj - data_series['Weather Datetime'])
+            if prev_diff < new_diff: # if local minima has just been passed
+                return row_idx-1 # return index location of minima
+            prev_diff = new_diff # else, continue
+            
+        return row_idx # if datetime_obj > all weather datetimes, return final index location
+            
+        
     
 '''
 Access csv_filepath of MasterFile written object via xxx.get_path()
