@@ -84,8 +84,9 @@ class MTADataFrame(DataFrame):
 class WUDataFrame(DataFrame):
     def __init__(self, csv_filepath):
         DataFrame.__init__(self, csv_filepath)
-        self._make_datetime_col()
         self._clean_up()
+        self._make_datetime_col()
+        self._delete_unneeded_cols()
         
     def _make_datetime_col(self):
         self.df['Weather Datetime'] = pd.Series('', index=self.df.index)
@@ -98,6 +99,10 @@ class WUDataFrame(DataFrame):
     
     def _clean_up(self):
         pass
+    
+    def _delete_unneeded_cols(self):
+        self.df = self.df.drop(['DateUTC<br />', 'TimeEDT'], 1)
+        return self
     
     # efficient method of finding closest datetime that does not require searching through all weather datetimes
     def find_closest_wu_datetime(self, datetime_obj):
