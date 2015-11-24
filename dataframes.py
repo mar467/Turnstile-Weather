@@ -45,7 +45,7 @@ class MTADataFrame(DataFrame):
             prev_datetime = curr_datetime
         
         self.df['Entries Per Hour'] = hourly_entries
-        return self.df
+        return self
     
     def _make_hourly_exits_col(self):
         hourly_exits = pd.Series(0, index=self.df.index)
@@ -64,7 +64,7 @@ class MTADataFrame(DataFrame):
             prev_datetime = curr_datetime
             
         self.df['Exits Per Hour'] = hourly_exits
-        return self.df
+        return self
     
     def _clean_up(self):
         pass
