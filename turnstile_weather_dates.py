@@ -54,10 +54,10 @@ class MTAEasyDate(EasyDate):
         return self
     def is_Saturday(self):
         return self.get_day_of_week() == 6
-    def next_Saturday(self):
+    def next_Saturday(self): # returns new object
         next_Sat_date = self.date + timedelta(days=7)
         return MTAEasyDate(next_Sat_date) # automatically becomes Saturday (due to new make_this_Saturday call), even if self.is_Saturday is False
-    def last_Saturday(self):
+    def last_Saturday(self): # returns new object
         last_Sat_date = self.date - timedelta(days=7)
         return MTAEasyDate(last_Sat_date)
         
@@ -67,10 +67,10 @@ class WUEasyDate(EasyDate):
         EasyDate.__init__(self, datetime_date_obj)
        
     # WU API provides data on daily basis   
-    def tomorrow(self):
+    def tomorrow(self): # returns new object
         tomorrow_date = self.date + timedelta(days=1)
         return WUEasyDate(tomorrow_date)
-    def yesterday(self):
+    def yesterday(self): # returns new object
         yesterday_date = self.date - timedelta(days=1)
         return WUEasyDate(yesterday_date)
     
@@ -96,6 +96,8 @@ class MTAEasyDateList(EasyDateList):
             mta_ezdate = mta_ezdate.next_Saturday()
             self.ezdate_list.append(mta_ezdate)
             
+        return self
+            
     def get_num_weeks(self):
         return len(self.ezdate_list)
 
@@ -117,6 +119,8 @@ class WUEasyDateList(EasyDateList):
         while wu_ezdate.date < self.ezdate_max.date - timedelta(days=1):
             wu_ezdate = wu_ezdate.tomorrow()
             self.ezdate_list.append(wu_ezdate)
+            
+        return self
             
     def get_num_days(self):
         return len(self.date_list)

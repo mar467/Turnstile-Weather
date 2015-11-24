@@ -20,7 +20,8 @@ class MTAEasyLink(EasyLink):
         month = self._ezdate.get_month_str()
         year = self._ezdate.get_abbrev_year_str()
         self.url = "http://web.mta.info/developers/data/nyct/turnstile/turnstile_"+year+month+day+".txt"
-    
+        return self        
+        
 class WUEasyLink(EasyLink):
     def __init__(self, wu_ezdate, location="KNYC"):
         EasyLink.__init__(self)
@@ -33,6 +34,7 @@ class WUEasyLink(EasyLink):
         month = self._ezdate.get_month_str()
         year = self._ezdate.get_year_str()
         self.url = "http://www.wunderground.com/history/airport/"+self._location+"/"+year+"/"+month+"/"+day+"/DailyHistory.html?req_city=New+York&req_state=NY&req_statename=New+York&reqdb.zip=10002&reqdb.magic=5&reqdb.wmo=99999&MR=1&format=1"
+        return self
 
 class EasyLinkList(object): # NOT a link"ed" list, just a list of URL strings
     def __init__(self):
@@ -48,6 +50,7 @@ class MTAEasyLinkList(EasyLinkList):
     def _make_ezlink_list(self):
         for ezdate in self._list_of_ezdates:
             self.ezlink_list.append(MTAEasyLink(ezdate))
+        return self
         
 class WUEasyLinkList(EasyLinkList):
     def __init__(self, wu_ezdate_list, location='KNYC'):
@@ -59,7 +62,7 @@ class WUEasyLinkList(EasyLinkList):
     def _make_ezlink_list(self):
         for ezdate in self._list_of_ezdates:
             self.ezlink_list.append(WUEasyLink(ezdate, self._location))
-
+        return self
 
 '''
 
