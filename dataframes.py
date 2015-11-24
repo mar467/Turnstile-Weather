@@ -19,12 +19,14 @@ class MTADataFrame(DataFrame):
         self._make_datetime_col()
         self._make_hourly_entries_col()
         self._make_hourly_exits_col()
+        self._delete_unneeded_cols()
         
     def _clean_up(self):
         new_columns = []
         for i in range(len(self.df.columns)):
             new_columns.append(self.df.columns[i].strip().title())
         self.df.columns = new_columns
+        return self
 
     def _make_datetime_col(self):
         self.df['Subway Datetime'] = pd.Series('', index=self.df.index)
@@ -70,6 +72,10 @@ class MTADataFrame(DataFrame):
             prev_datetime = curr_datetime
             
         self.df['Exits Per Hour'] = hourly_exits
+        return self
+        
+    def _delete_unneeded_cols(self):
+        self.df = self.df.drop(['Date', 'Time'], 1)
         return self
     
     def _fill_nan_with_averages(self):
