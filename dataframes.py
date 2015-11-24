@@ -6,6 +6,7 @@ Created on Mon Nov 23 11:11:28 2015
 """
 
 import pandas as pd
+from datetime import datetime
 
 class DataFrame(object):
     def __init__(self, csv_filepath):
@@ -20,7 +21,12 @@ class MTADataFrame(DataFrame):
         self._clean_up()
         
     def _make_datetime_col(self):
-        pass
+        self.df['Subway Datetimes'] = pd.Series('', index=self.df.index)
+        for row_idx, data_series in data.iterrows():
+            datetime_str = data_series["DATE"]+' '+data_series["TIME"]
+            datetime_obj = datetime.strptime(datetime_str, '%m/%d/%Y %H:%M:%S')
+            self.df.loc[row_idx, 'Subway Datetimes'] = datetime_obj
+        return self
     
     def _make_hourly_entries_col(self):
         pass
