@@ -5,6 +5,10 @@ Created on Mon Nov 23 11:11:28 2015
 @author: moizr_000
 """
 
+# a note on terminology:
+# 'df' is used to refer to a pandas.DataFrame object
+# 'dataframe' is used to refer to the object created by these classes
+
 import pandas as pd
 from datetime import datetime, timedelta
 
@@ -120,7 +124,7 @@ class WUDataFrame(DataFrame):
     # some weather data might not find its way to the final dataframe
 ###
             
-class TurnstileWeatherDataFrame(DataFrame):
+class TurnstileWeatherDataFrame(DataFrame): # TAKES IN PANDAS DATAFRAMES!
     def __init__(self, MTA_dataframe, WU_dataframe):
         DataFrame.__init__(self)
         self._merge_dataframes(MTA_dataframe, WU_dataframe)
@@ -129,7 +133,7 @@ class TurnstileWeatherDataFrame(DataFrame):
     # the first helper method in executing merge of MTA_ and WU_dataframes
     # returns index location of closest weather datetime given a datetime object
     # efficient because avoids searching through all weather datetimes
-    def _closest_wu_datetime(WU_dataframe, datetime_obj):
+    def _closest_wu_datetime(self, WU_df, datetime_obj):
         ''' 
         The strategy here will be keep calculating the difference between the datetime_obj and the datetimes
         in the weather dataframe... WHILE the differences are decreasing (i.e.: approaching a local minima).
@@ -141,7 +145,7 @@ class TurnstileWeatherDataFrame(DataFrame):
         # initialize with largest possible difference, to ensure differences at least start by decreasing
         prev_diff = datetime.max - datetime.min
         
-        for row_idx, data_series in WU_dataframe.df.iterrows():
+        for row_idx, data_series in WU_df.iterrows():
             new_diff = abs(datetime_obj - data_series['Weather Datetime'])
             if prev_diff < new_diff: # if local minima has just been passed
                 return row_idx-1 # return index location of minima
@@ -152,7 +156,7 @@ class TurnstileWeatherDataFrame(DataFrame):
     # second helper method in executing merge of MTA_ and WU_dataframes, using above method within it  
     # returns closest weather datetime INDEXES corresponding to entire subway datetime series
     # efficient because avoids restarting at start of WU_dataframe datetimes for each MTA datetime comparison search
-    def _closest_wu_datetimes(self, WU_dataframe, MTA_dataframe):
+    def _closest_wu_datetimes(self, WU_df, MTA_df):
         '''
         The strategy here is to again use the chronology of datetimes in both dataframes advantageously. Basically,
         as we iterate through each datetime in the MTA_dataframe, we record what the WU_dataframe index location of
@@ -163,15 +167,15 @@ class TurnstileWeatherDataFrame(DataFrame):
         # defines a Series with an index identical to the MTA_dataframe...
         # but to be filled with the index locations of the closest WU_dataframe datetimes!
         # this is designed in such a way to make merging the WU_dataframe into the MTA_dataframe as simple as possible
-        closest_indexes = pd.Series(0, index=MTA_dataframe.df.index)
+        closest_indexes = pd.Series(0, index=MTA_df.index)
         
-        start_of_wu_df = WU_dataframe.df.index[0]
+        start_of_wu_df = WU_df.index[0]
         
         prev_wu_idx = start_of_wu_df # initialize 'where we last left off' index to start of WU_dataframe
         # prev_mta_dt necessary to know for when mta datetimes reach end of turnstile unit, and cycle over from first date     
         prev_mta_dt = datetime.min # initialize to datetime smallest value to start
         
-        for mta_idx, data_series in MTA_dataframe.df.iterrows():
+        for mta_idx, data_series in MTA_df.iterrows():
             curr_mta_dt = data_series["Subway Datetime"]
             
             # if subway datetimes cycle to end of loop (i.e.: reached end of turnstile unit, going to next)
@@ -181,7 +185,7 @@ class TurnstileWeatherDataFrame(DataFrame):
             
             # note the .loc[prev_wu_idx:]
             # this has the effect of starting at where last left off in the WU_dataframe, to save time
-            closest_wu_idx = self._closest_wu_datetime(WU_dataframe, MTA_dataframe.df.loc[prev_wu_idx:])
+            closest_wu_idx = self._closest_wu_datetime(WU_df.loc[prev_wu_idx:], curr_mta_dt)
             
             closest_indexes[mta_idx] = closest_wu_idx
             
@@ -191,19 +195,21 @@ class TurnstileWeatherDataFrame(DataFrame):
         return closest_indexes
         
     # third helper method, that simply returns an updated weather df to be concatenated to existing MTA_dataframe
-    def _updated_weather_df(self, WU_dataframe, MTA_dataframe):
-        corresponding_wu_idxs = self._closest_wu_datetimes(WU_dataframe, MTA_dataframe)
+    def _updated_weather_df(self, WU_df, MTA_df):
+        corresponding_wu_idxs = self._closest_wu_datetimes(WU_df, MTA_df)
         
-        updated_weather_df = pd.DataFrame(index=corresponding_wu_idxs.index, columns=WU_dataframe.df.columns)
+        updated_weather_df = pd.DataFrame(index=corresponding_wu_idxs.index, columns=WU_df.columns)
         
         for new_idx, wu_idx in corresponding_wu_idxs.iteritems():
-            updated_weather_df.iloc[new_idx] = WU_dataframe.df.iloc[wu_idx]
+            updated_weather_df.iloc[new_idx] = WU_df.iloc[wu_idx]
             
         return updated_weather_df
         
     # finally, use all these helper methods to create a final merged dataframe  
     def _merge_dataframes(self, MTA_dataframe, WU_dataframe):
-        upd_wu_df = self._updated_weather_df(WU_dataframe, MTA_dataframe)
+        MTA_df = MTA_dataframe.df
+        WU_df = WU_dataframe.df
+        upd_wu_df = self._updated_weather_df(WU_df, MTA_df)
         self.df = pd.concat([MTA_dataframe.df, upd_wu_df], axis=1)
         return self
         
