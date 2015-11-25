@@ -124,6 +124,7 @@ class TurnstileWeatherDataFrame(DataFrame):
     def __init__(self, MTA_dataframe, WU_dataframe):
         DataFrame.__init__(self)
         self._merge_dataframes(MTA_dataframe, WU_dataframe)
+        self._rearrange()
         
     # the first helper method in executing merge of MTA_ and WU_dataframes
     # returns index location of closest weather datetime given a datetime object
@@ -204,4 +205,11 @@ class TurnstileWeatherDataFrame(DataFrame):
     def _merge_dataframes(self, MTA_dataframe, WU_dataframe):
         upd_wu_df = self._updated_weather_df(WU_dataframe, MTA_dataframe)
         self.df = pd.concat([MTA_dataframe.df, upd_wu_df], axis=1)
+        return self
+        
+    def _rearrange(self):
+        cols = self.df.columns.tolist()
+        cols.insert(0, cols.pop(cols.index('Weather Datetime')))
+        cols.insert(0, cols.pop(cols.index('Subway Datetime')))
+        self.df = self.df.reindex(columns = cols)
         return self
