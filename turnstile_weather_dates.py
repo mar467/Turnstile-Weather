@@ -133,7 +133,7 @@ class WUEasyDateList(EasyDateList):
             
         self.ezdate_list.append(wu_ezdate)
         
-        while wu_ezdate.date < self.ezdate_max.get_this_Saturday():
+        while wu_ezdate.date < self.ezdate_max.get_this_Saturday() - timedelta(days=1):
             wu_ezdate = wu_ezdate.tomorrow()
             self.ezdate_list.append(wu_ezdate)
             
