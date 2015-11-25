@@ -107,9 +107,15 @@ class WUDataFrame(DataFrame):
     def _delete_unneeded_cols(self):
         self.df = self.df.drop(['DateUTC<br />', 'TimeEDT'], 1)
         return self
-    
+            
+        
+class TurnstileWeatherDataFrame(DataFrame):
+    def __init__(self, MTA_dataframe, WU_dataframe):
+        DataFrame.__init__(self)
+        
     # efficient method of finding closest datetime that does not require searching through all weather datetimes
-    def find_closest_wu_datetime(self, datetime_obj):
+    # returns INDEX location of closest datetime
+    def _closest_wu_datetime(WU_dataframe, datetime_obj):
         ''' 
         The strategy here will be keep calculating the difference between the datetime_obj and the datetimes
         in the weather dataframe... WHILE the differences are decreasing (i.e.: approaching a local minima).
@@ -121,17 +127,10 @@ class WUDataFrame(DataFrame):
         # initialize with largest possible difference, to ensure differences at least start by decreasing
         prev_diff = datetime.max - datetime.min
         
-        for row_idx, data_series in self.df.iterrows():
+        for row_idx, data_series in WU_dataframe.df.iterrows():
             new_diff = abs(datetime_obj - data_series['Weather Datetime'])
             if prev_diff < new_diff: # if local minima has just been passed
                 return row_idx-1 # return index location of minima
             prev_diff = new_diff # else, continue
             
         return row_idx # if datetime_obj > all weather datetimes, return final index location
-            
-        
-class TurnstileWeatherDataFrame(DataFrame):
-    def __init__(self, MTA_dataframe, WU_dataframe):
-        DataFrame.__init__(self)
-        
-        
