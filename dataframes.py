@@ -108,13 +108,25 @@ class WUDataFrame(DataFrame):
         self.df = self.df.drop(['DateUTC<br />', 'TimeEDT'], 1)
         return self
             
-        
+            
+### TurnstileWeatherDataFrame class:
+    # purpose is to combine MTA dataframe and WU dataframe into one master dataframe
+    # because the MTA datetimes and WU datetimes don't match exactly,
+    # the purpose of this class is to find the CLOSEST matches between the two
+    # and write them together into a master dataframe
+    # because the difference between closest matches is on the order of 9 minutes
+    # this won't sacrifice much accuracy (weather does not change much in that time)
+    # also note: since the weather data is taken far more frequently than subway data
+    # some weather data might not find its way to the final dataframe
+###
+            
 class TurnstileWeatherDataFrame(DataFrame):
     def __init__(self, MTA_dataframe, WU_dataframe):
         DataFrame.__init__(self)
         
-    # efficient method of finding closest datetime that does not require searching through all weather datetimes
-    # returns INDEX location of closest datetime
+    # the first helper method in executing merge of MTA_ and WU_dataframes
+    # returns index location of closest weather datetime given a datetime object
+    # efficient because avoids searching through all weather datetimes
     def _closest_wu_datetime(WU_dataframe, datetime_obj):
         ''' 
         The strategy here will be keep calculating the difference between the datetime_obj and the datetimes
@@ -134,3 +146,44 @@ class TurnstileWeatherDataFrame(DataFrame):
             prev_diff = new_diff # else, continue
             
         return row_idx # if datetime_obj > all weather datetimes, return final index location
+        
+    # second helper method in executing merge of MTA_ and WU_dataframes, using above method within it  
+    # returns closest weather datetime INDEXES corresponding to entire subway datetime series
+    # efficient because avoids restarting at start of WU_dataframe datetimes for each MTA datetime comparison search
+    def _closest_wu_datetimes(self, WU_dataframe, MTA_dataframe):
+        '''
+        The strategy here is to again use the chronology of datetimes in both dataframes advantageously. Basically,
+        as we iterate through each datetime in the MTA_dataframe, we record what the WU_dataframe index location of
+        the previous closest match was. This way, we can start there next time, rather than at the beginning of the
+        WU_dataframe for every iteration. This speeds up the process drastically.
+        '''
+        
+        # defines a Series with an index identical to the MTA_dataframe...
+        # but to be filled with the index locations of the closest WU_dataframe datetimes!
+        # this is designed in such a way to make merging the WU_dataframe into the MTA_dataframe as simple as possible
+        closest_indexes = pd.Series(0, index=MTA_dataframe.df.index)
+        
+        start_of_wu_df = WU_dataframe.df.index[0]
+        
+        prev_wu_idx = start_of_wu_df # initialize 'where we last left off' index to start of WU_dataframe
+        # prev_mta_dt necessary to know for when mta datetimes reach end of turnstile unit, and cycle over from first date     
+        prev_mta_dt = datetime.min # initialize to datetime smallest value to start
+        
+        for mta_idx, data_series in MTA_dataframe.df.iterrows():
+            curr_mta_dt = data_series["Subway Datetime"]
+            
+            # if subway datetimes cycle to end of loop (i.e.: reached end of turnstile unit, going to next)
+            if(prev_mta_dt > curr_mta_dt):
+                # start over at beginning of WU_dataframe again
+                prev_wu_idx = start_of_wu_df
+            
+            # note the .loc[prev_wu_idx:]
+            # this has the effect of starting at where last left off in the WU_dataframe, to save time
+            closest_wu_idx = self._closest_wu_datetime(WU_dataframe, MTA_dataframe.df.loc[prev_wu_idx:])
+            
+            closest_indexes[mta_idx] = closest_wu_idx
+            
+            prev_wu_idx = closest_wu_idx # enable continuation of where last left off
+            prev_mta_dt = curr_mta_dt # again, to check if reached end of turnstile unit (when prev_mta_dt becomes greater than curr_mta_dt)
+            
+        return closest_indexes
