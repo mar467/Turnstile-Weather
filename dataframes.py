@@ -9,12 +9,14 @@ import pandas as pd
 from datetime import datetime, timedelta
 
 class DataFrame(object):
-    def __init__(self, csv_filepath):
-        self.df = pd.read_csv(csv_filepath)
+    def __init__(self):
+        self.df = pd.DataFrame()
         
 class MTADataFrame(DataFrame):
     def __init__(self, csv_filepath):
-        DataFrame.__init__(self, csv_filepath)
+        DataFrame.__init__(self)
+        self.df = pd.read_csv(csv_filepath)
+        
         self._clean_up()
         self._make_datetime_col()
         self._make_hourly_entries_col()
@@ -83,7 +85,9 @@ class MTADataFrame(DataFrame):
     
 class WUDataFrame(DataFrame):
     def __init__(self, csv_filepath):
-        DataFrame.__init__(self, csv_filepath)
+        DataFrame.__init__(self)
+        self.df = pd.read_csv(csv_filepath)
+        
         self._clean_up()
         self._make_datetime_col()
         self._delete_unneeded_cols()
@@ -126,7 +130,8 @@ class WUDataFrame(DataFrame):
         return row_idx # if datetime_obj > all weather datetimes, return final index location
             
         
-    
-'''
-Access csv_filepath of MasterFile written object via xxx.get_path()
-'''
+class TurnstileWeatherDataFrame(DataFrame):
+    def __init__(self, MTA_dataframe, WU_dataframe):
+        DataFrame.__init__(self)
+        
+        
