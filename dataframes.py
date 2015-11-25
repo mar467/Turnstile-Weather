@@ -187,3 +187,19 @@ class TurnstileWeatherDataFrame(DataFrame):
             prev_mta_dt = curr_mta_dt # again, to check if reached end of turnstile unit (when prev_mta_dt becomes greater than curr_mta_dt)
             
         return closest_indexes
+        
+    # third helper method, that simply returns an updated weather df to be concatenated to existing MTA_dataframe
+    def _updated_weather_df(self, WU_dataframe, MTA_dataframe):
+        corresponding_wu_idxs = self._closest_wu_datetimes(WU_dataframe, MTA_dataframe)
+        
+        updated_weather_df = pd.DataFrame(index=corresponding_wu_idxs.index, columns=WU_dataframe.df.columns)
+        
+        for new_idx, wu_idx in corresponding_wu_idxs.iteritems():
+            updated_weather_df.iloc[new_idx] = WU_dataframe.df.iloc[wu_idx]
+            
+        return updated_weather_df
+        
+        
+        
+        
+    # def _merge_dataframes(self, MTA_dataframe, WU_dataframe):
