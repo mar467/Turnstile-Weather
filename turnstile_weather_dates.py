@@ -7,7 +7,7 @@ Created on Fri Nov 20 07:30:39 2015
 
 from datetime import date, timedelta
 
-class EasyDate(object):
+class Date(object): # responsibility: for Link classes
     def __init__(self, datetime_date_obj):
         self.date = datetime_date_obj
         self.original_date = self.date
@@ -37,42 +37,58 @@ class EasyDate(object):
         return self.get_year_str()[-2:]
     def get_day_of_week(self): # 1 is Mon, 7 is Sun
         return self.date.isoweekday()
+        
+class EasyDate(Date): # responsibility: for child classes, and EasyDateList classes
+    def __init__(self, datetime_date_obj):
+        Date.__init__(self, datetime_date_obj)
+        
+    # the following "get" methods all return datetime objects
+    def get_tomorrow(self): 
+        return self.date + timedelta(days=1)
+    def get_yesterday(self):
+        return self.date - timedelta(days=1)
+    def get_next_week(self):
+        return self.date + timedelta(days=7)
+    def get_last_week(self):
+        return self.date - timedelta(days=7)
+    def get_this_Saturday(self):
+        days_to_add = 6 - self.get_day_of_week()
+        if days_to_add == -1:
+            days_to_add = 6
+        delta_days = timedelta(days=days_to_add)
+        return self.date + delta_days
+    def get_last_Saturday(self):
+        return self.get_this_Saturday() - timedelta(days=7) # lazy
+    def is_Saturday(self):
+        return self.get_day_of_week() == 6
+        
+    '''
+    def this_Saturday(self): # returns new EasyDate object
+        return EasyDate(self.get_this_Saturday())
+    def last_Saturday(self): # returns new EasyDate object
+        return EasyDate(self.get_last_Saturday())
+    '''
 
 # MTA stands for Metro Transit Authority   
 class MTAEasyDate(EasyDate):
     def __init__(self, datetime_date_obj):
         EasyDate.__init__(self, datetime_date_obj)
-        self._make_this_Saturday()
+        self._make_this_Saturday() # MTA API only provides data on a weekly basis, corresponding to Saturday dates   
         
-    # MTA API only provides data on a weekly basis, corresponding to Saturday dates   
     def _make_this_Saturday(self):
-        days_to_add = 6 - self.get_day_of_week()
-        if days_to_add == -1:
-            days_to_add = 6
-        delta_days = timedelta(days=days_to_add)
-        self.date = self.date + delta_days
+        self.date = self.get_this_Saturday()
         return self
-    def is_Saturday(self):
-        return self.get_day_of_week() == 6
-    def next_Saturday(self): # returns new object
-        next_Sat_date = self.date + timedelta(days=7)
-        return MTAEasyDate(next_Sat_date) # automatically becomes Saturday (due to new make_this_Saturday call), even if self.is_Saturday is False
-    def last_Saturday(self): # returns new object
-        last_Sat_date = self.date - timedelta(days=7)
-        return MTAEasyDate(last_Sat_date)
+    
+    def next_Saturday(self): # returns new MTAEasyDate object
+        return MTAEasyDate(self.get_next_week()) # automatically initialized to Saturday
         
 # WU stands for Weather Underground
 class WUEasyDate(EasyDate):
     def __init__(self, datetime_date_obj):
-        EasyDate.__init__(self, datetime_date_obj)
-       
-    # WU API provides data on daily basis   
-    def tomorrow(self): # returns new object
-        tomorrow_date = self.date + timedelta(days=1)
-        return WUEasyDate(tomorrow_date)
-    def yesterday(self): # returns new object
-        yesterday_date = self.date - timedelta(days=1)
-        return WUEasyDate(yesterday_date)
+        EasyDate.__init__(self, datetime_date_obj) # WU API provides data on daily basis  
+        
+    def tomorrow(self): # returns new WUEasyDate object
+        return WUEasyDate(self.get_tomorrow())
     
 class EasyDateList(object):
     def __init__(self, ezdate_min, ezdate_max): # takes in two date objects
@@ -105,10 +121,11 @@ class MTAEasyDateList(EasyDateList):
 class WUEasyDateList(EasyDateList):
     def __init__(self, ezdate_min, ezdate_max, start_yesterday=False):
         EasyDateList.__init__(self, ezdate_min, ezdate_max)
+        self.ezdate_min = self.ezdate_min
         self._make_ezdate_list(start_yesterday)
 
     def _make_ezdate_list(self, start_yesterday):
-        wu_ezdate = WUEasyDate(self.ezdate_min.date)
+        wu_ezdate = WUEasyDate(self.ezdate_min.get_last_Saturday())
         
         # may be useful to start one day early to get 11:51 pm reading
         if start_yesterday:
@@ -116,7 +133,7 @@ class WUEasyDateList(EasyDateList):
             
         self.ezdate_list.append(wu_ezdate)
         
-        while wu_ezdate.date < self.ezdate_max.date - timedelta(days=1):
+        while wu_ezdate.date < self.ezdate_max.get_this_Saturday():
             wu_ezdate = wu_ezdate.tomorrow()
             self.ezdate_list.append(wu_ezdate)
             
