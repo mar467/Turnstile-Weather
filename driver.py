@@ -26,8 +26,9 @@ import file_writer
 import dataframes
 
 class Driver(object):
-    def __init__(self, (start_month, start_day, start_year), (end_month, end_day, end_year), filename="turnstile_weather.csv"):
+    def __init__(self, (start_month, start_day, start_year), (end_month, end_day, end_year), num_scps, filename="turnstile_weather.csv"):
         self._make_start_end_dates((start_month, start_day, start_year), (end_month, end_day, end_year))
+        self.num_scps = num_scps        
         MTA_dataframe = self._make_MTA_dataframe()
         WU_dataframe = self._make_WU_dataframe()
         master_dataframe = dataframes.TurnstileWeatherDataFrame(MTA_dataframe, WU_dataframe)
@@ -44,7 +45,7 @@ class Driver(object):
     def _make_MTA_dataframe(self):
         MTA_ezdates = dates.MTAEasyDateList(self._ezdate_min, self._ezdate_max)
         MTA_ezlinks = links.MTAEasyLinkList(MTA_ezdates)
-        MTA_master_file = file_writer.MTAMasterFileWriter(MTA_ezlinks)
+        MTA_master_file = file_writer.MTAMasterFileWriter(MTA_ezlinks, num_scps=self.num_scps)
         return dataframes.MTADataFrame(MTA_master_file.get_path())
         
     def _make_WU_dataframe(self):
@@ -58,4 +59,4 @@ class Driver(object):
         return self
         
         
-master_df_maker = Driver((10,1,2015), (11,1,2015))
+master_df_maker = Driver((10,1,2015), (11,1,2015), 4)
