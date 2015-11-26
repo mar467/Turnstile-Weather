@@ -18,6 +18,7 @@ out-of-date-range rows in the dataframe after the fact), but for the purposes
 of this project, the current code will suffice.
 '''
 
+import pandas as pd
 import datetime
 import turnstile_weather_dates as dates
 import turnstile_weather_links as links
@@ -25,12 +26,13 @@ import file_writer
 import dataframes
 
 class Driver(object):
-    def __init__(self, (start_month, start_day, start_year), (end_month, end_day, end_year)):
+    def __init__(self, (start_month, start_day, start_year), (end_month, end_day, end_year), filename="turnstile_weather.csv"):
         self._make_start_end_dates((start_month, start_day, start_year), (end_month, end_day, end_year))
         MTA_dataframe = self._make_MTA_dataframe()
         WU_dataframe = self._make_WU_dataframe()
         master_dataframe = dataframes.TurnstileWeatherDataFrame(MTA_dataframe, WU_dataframe)
         self.df = master_dataframe.df
+        self._write_to_csv(filename)
 
     def _make_start_end_dates(self, (start_month, start_day, start_year), (end_month, end_day, end_year)):
         dt_min = datetime.date(start_year, start_month, start_day)
@@ -51,6 +53,9 @@ class Driver(object):
         WU_master_file = file_writer.WUMasterFileWriter(WU_ezlinks)
         return dataframes.WUDataFrame(WU_master_file.get_path())
         
+    def _write_to_csv(self, filename):
+        self.df.to_csv(filename)
+        return self
+        
+        
 master_df_maker = Driver((10,1,2015), (11,1,2015))
-master_df = master_df_maker.df
-master_df._to_csv("Excel_test.html")
