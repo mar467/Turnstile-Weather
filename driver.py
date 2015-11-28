@@ -62,5 +62,5 @@ class Driver(object):
         
 # master_df_maker = Driver((5,22,2015), (8,22,2015), 10)
 stat = statistics.ExploratoryAnalysis(pd.read_csv('turnstile_weather.csv'))
-with_cond, without_cond, U, p = stat.mann_whitney_plus_means('wind direction')
+with_cond, without_cond, U, p = stat.mann_whitney_plus_means('pvr')
 print with_cond, without_cond, p

@@ -61,8 +61,8 @@ class ExploratoryAnalysis(TurnstileWeatherStatistics):
             return with_rain_mean, without_rain_mean, U, p
             
         if selection == 'skies':
-            clear = self.df[self.df["Conditions"]=='Light Rain']['Entries Per Hour'] # series
-            not_clear = self.df[self.df["Conditions"]!='Light Rain']['Entries Per Hour']
+            clear = self.df[self.df["Conditions"]=='Clear']['Entries Per Hour'] # series
+            not_clear = self.df[self.df["Conditions"]!='Clear']['Entries Per Hour']
             clear_mean = np.mean(clear)
             not_clear_mean = np.mean(not_clear)
             
@@ -108,3 +108,26 @@ class ExploratoryAnalysis(TurnstileWeatherStatistics):
             U, p = scipy.stats.mannwhitneyu(zero_deg, not_zero_deg, use_continuity=True)
             return zero_deg_mean, not_zero_deg_mean, U, p
             
+        if selection == 'precipitation':
+            precip = self.df[self.df["PrecipitationIn"]>0]['Entries Per Hour']
+            no_precip = self.df[np.isnan(self.df["PrecipitationIn"])]['Entries Per Hour']
+            precip_mean = np.mean(precip)
+            no_precip_mean = np.mean(no_precip)
+            
+            print precip.size
+            print no_precip.size
+            
+            U, p = scipy.stats.mannwhitneyu(precip, no_precip, use_continuity=True)
+            return precip_mean, no_precip_mean, U, p
+            
+        if selection == 'pvr':
+            precip = self.df[self.df["PrecipitationIn"]>0]['Entries Per Hour']
+            with_rain = self.df[self.df["Events"]=='Rain']['Entries Per Hour']
+            precip_mean = np.mean(precip)
+            with_rain_mean = np.mean(with_rain)
+            
+            print precip.size
+            print with_rain.size
+            
+            U, p = scipy.stats.mannwhitneyu(precip, with_rain, use_continuity=True)
+            return precip_mean, with_rain_mean, U, p
