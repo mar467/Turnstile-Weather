@@ -24,6 +24,7 @@ import turnstile_weather_dates as dates
 import turnstile_weather_links as links
 import file_writer
 import dataframes
+import statistics
 
 class Driver(object):
     def __init__(self, (start_month, start_day, start_year), (end_month, end_day, end_year), num_scps, filename="turnstile_weather.csv"):
@@ -59,4 +60,6 @@ class Driver(object):
         return self
         
         
-master_df_maker = Driver((7,1,2015), (11,1,2015), 1)
+# master_df_maker = Driver((5,22,2015), (8,22,2015), 10)
+stat = statistics.ExploratoryAnalysis(pd.read_csv('turnstile_weather.csv'))
+stat.entries_histogram()
