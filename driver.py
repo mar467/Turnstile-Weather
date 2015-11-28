@@ -62,4 +62,4 @@ class Driver(object):
         
 # master_df_maker = Driver((5,22,2015), (8,22,2015), 10)
 stat = statistics.ExploratoryAnalysis(pd.read_csv('turnstile_weather.csv'))
-stat.entries_histogram()
+stat.entries_histogram('gusts')
