@@ -34,7 +34,7 @@ class MTAMasterFileWriter(MasterFileWriter):
             # and THEN move on to the next turnstile unit
     ###
      
-    def _first_n_scps(self, master_file, f_ins, num_scps): # scp = sub channel position (turnstile unit identifier)
+    def _first_n_scps(self, master_file, f_ins, num_scps=8): # scp = sub channel position (turnstile unit identifier)
         '''
         This specific solution avoids using x = file.tell() or file.seek(x), simply because reading a url file
         with urlopen won't allow for it. However, using these two methods would have allowed me flexibility in,
@@ -51,6 +51,11 @@ class MTAMasterFileWriter(MasterFileWriter):
             last_lines.append(f_in.readline()) # initialize last lines list with first non-header line of each file
             
         master_file.write(header) # write the header just once
+
+        ''' NEW ADDITION: skipping to Times Square '''
+        for i in range(0, len(f_ins)): # for each file...
+            while last_lines[i].split(",")[3] != "42 ST-TIMES SQ": # while the line does not refer to Times Square
+                last_lines[i] = f_ins[i].readline() # skip the line        
         
         scp_num = 0
         
@@ -75,6 +80,8 @@ class MTAMasterFileWriter(MasterFileWriter):
             
         for f_in in f_ins:
             f_in.close()
+            
+    def _Times_Square
             
             
 class WUMasterFileWriter(MasterFileWriter):
