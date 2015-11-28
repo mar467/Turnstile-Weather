@@ -10,6 +10,7 @@ Created on Mon Nov 23 11:11:28 2015
 # 'dataframe' is used to refer to the object created by these classes
 
 import pandas as pd
+import numpy as np
 from datetime import datetime, timedelta
 
 class DataFrame(object):
@@ -23,6 +24,8 @@ class MTADataFrame(DataFrame):
         
         self._clean_up()
         self._make_datetime_col()
+        self._combine_scps()
+        self._drop_scp()
         self._make_hourly_entries_col()
         self._make_hourly_exits_col()
         self._delete_unneeded_cols()
@@ -41,6 +44,30 @@ class MTADataFrame(DataFrame):
             datetime_obj = datetime.strptime(datetime_str, '%m/%d/%Y %H:%M:%S')
             self.df.loc[row_idx, 'Subway Datetime'] = datetime_obj
         return self
+        
+    def _combine_scps(self):
+        
+        def end_index_first_scp():
+            first_scp = self.df.loc[0, 'Scp']
+            for row_idx, data_series in self.df.iterrows():
+                if data_series['Scp'] != first_scp:
+                    return row_idx - 1
+        
+        old_df = self.df
+        
+        end_first_scp = end_index_first_scp()
+        new_df = old_df.loc[0:end_first_scp] # make a new df, consisting of only first scp in old_df
+
+        for row_idx, data_series in new_df.iterrows():
+            # dataframe consisting of the data for all scps for a given date
+            all_scps_for_date_df = old_df[old_df['Subway Datetime']==data_series['Subway Datetime']]
+            new_df.loc[row_idx, 'Entries'] = np.sum(all_scps_for_date_df['Entries'])
+            new_df.loc[row_idx, 'Exits'] = np.sum(all_scps_for_date_df['Exits'])
+
+        self.df = new_df
+        
+    def _drop_scp(self):
+        self.df = self.df.drop(['Scp'], 1)
     
     def _make_hourly_entries_col(self):
         hourly_entries = pd.Series(0, index=self.df.index)
