@@ -19,6 +19,10 @@ class ExploratoryAnalysis(TurnstileWeatherStatistics):
     def __init__(self, turnstile_weather_df):
         TurnstileWeatherStatistics.__init__(self, turnstile_weather_df)
         
+    def only_include_busy_turnstiles(self):
+        self.df = self.df[self.df['Entries'] > 10000]
+        self.df['Entries Per Hour'] = self.df['Entries Per Hour'].fillna(0)
+        
     def entries_histogram(self, selection='rain'):
         if selection == 'rain':
             plt.figure()
@@ -69,7 +73,7 @@ class ExploratoryAnalysis(TurnstileWeatherStatistics):
             print clear.size
             print not_clear.size
             
-            U, p = scipy.stats.mannwhitneyu(clear, not_clear, use_continuity=True)
+            U, p = scipy.stats.mannwhitneyu(clear, not_clear, use_continuity=False)
             return clear_mean, not_clear_mean, U, p
             
         if selection == 'visibility':
@@ -109,7 +113,7 @@ class ExploratoryAnalysis(TurnstileWeatherStatistics):
             return zero_deg_mean, not_zero_deg_mean, U, p
             
         if selection == 'precipitation':
-            precip = self.df[self.df["PrecipitationIn"]>0]['Entries Per Hour']
+            precip = self.df[self.df["PrecipitationIn"]>0.01]['Entries Per Hour']
             no_precip = self.df[np.isnan(self.df["PrecipitationIn"])]['Entries Per Hour']
             precip_mean = np.mean(precip)
             no_precip_mean = np.mean(no_precip)
