@@ -81,8 +81,6 @@ class MTAMasterFileWriter(MasterFileWriter):
         for f_in in f_ins:
             f_in.close()
             
-    def _Times_Square
-            
             
 class WUMasterFileWriter(MasterFileWriter):
     def __init__(self, wu_ezlink_list, filename='WU_master_file.txt'):
