@@ -112,6 +112,8 @@ class WUDataFrame(DataFrame):
         self.df = self.df.drop(['DateUTC<br />', 'TimeEDT'], 1)
         return self
             
+    def _wrangle_wind_speed(self):
+        pass
             
 ### TurnstileWeatherDataFrame class:
     # purpose is to combine MTA dataframe and WU dataframe into one master dataframe
