@@ -47,27 +47,51 @@ class MTADataFrame(DataFrame):
         
     def _combine_scps(self):
         
-        def end_index_first_scp():
-            first_scp = self.df.loc[0, 'Scp']
-            for row_idx, data_series in self.df.iterrows():
+        def end_index_first_scp(df):
+            first_scp = df.loc[0, 'Scp']
+            for row_idx, data_series in df.iterrows():
                 if data_series['Scp'] != first_scp:
                     return row_idx - 1
         
         old_df = self.df
         
-        end_first_scp = end_index_first_scp()
+        scp_arr = old_df['Scp'].unique().tolist()
+        
+        end_first_scp = end_index_first_scp(self.df)
         new_df = old_df.loc[0:end_first_scp] # make a new df, consisting of only first scp in old_df
 
         for row_idx, data_series in new_df.iterrows():
             # dataframe consisting of the data for all scps for a given date
             all_scps_for_date_df = old_df[old_df['Subway Datetime']==data_series['Subway Datetime']]
-            new_df.loc[row_idx, 'Entries'] = np.sum(all_scps_for_date_df['Entries'])
-            new_df.loc[row_idx, 'Exits'] = np.sum(all_scps_for_date_df['Exits'])
+            
+            # the following code is in case there is a missing value in one the turnstiles for a specific datetime        
+            additional_entries = 0
+            additional_exits = 0            
+            if all_scps_for_date_df['Scp'].size != len(scp_arr):
+                all_scps = all_scps_for_date_df['Scp'].tolist()
+                missed_scps = list(set(scp_arr) - set(all_scps))
+                
+                for scp in missed_scps:
+                    this_scp_df = old_df[old_df['Scp'] == scp]
+                    print 'scp is '+scp
+                    
+                    before_dt = this_scp_df[this_scp_df['Subway Datetime'] < data_series['Subway Datetime']]             
+                    last_before_dt = before_dt.iloc[-1]                  
+                    
+                    after_dt = this_scp_df[this_scp_df['Subway Datetime'] > data_series['Subway Datetime']]                   
+                    first_after_dt = after_dt.iloc[0]
+                    
+                    additional_entries += (last_before_dt['Entries'] + first_after_dt['Entries'])/2.0
+                    additional_exits += (last_before_dt['Exits'] + first_after_dt['Exits'])/2.0
+          
+            new_df.loc[row_idx, 'Entries'] = np.sum(all_scps_for_date_df['Entries']) + additional_entries
+            new_df.loc[row_idx, 'Exits'] = np.sum(all_scps_for_date_df['Exits']) + additional_exits
 
         self.df = new_df
         
     def _drop_scp(self):
         self.df = self.df.drop(['Scp'], 1)
+        
     
     def _make_hourly_entries_col(self):
         hourly_entries = pd.Series(0, index=self.df.index)

@@ -67,8 +67,11 @@ class ExploratoryAnalysis(TurnstileWeatherStatistics):
         if selection == 'skies':
             clear = self.df[self.df["Conditions"]=='Clear']['Entries Per Hour'] # series
             not_clear = self.df[self.df["Conditions"]!='Clear']['Entries Per Hour']
-            clear_mean = np.mean(clear)
-            not_clear_mean = np.mean(not_clear)
+            clear_mean = clear.mean()
+            not_clear_mean = not_clear.mean()
+            
+            self.df["Entries Per Hour"].to_csv("Test1.csv")
+            clear.to_csv("Test.csv")
             
             print clear.size
             print not_clear.size

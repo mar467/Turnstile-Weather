@@ -60,9 +60,11 @@ class Driver(object):
         return self
         
         
-# master_df_maker = Driver((1,1,2015), (11,12,2015), 1)
+master_df_maker = Driver((7,1,2015), (9,1,2015), 8)
+'''
 stat = statistics.ExploratoryAnalysis(pd.read_csv('turnstile_weather.csv'))
 stat.only_include_busy_turnstiles()
 with_cond, without_cond, U, p = stat.mann_whitney_plus_means('skies')
 print with_cond, without_cond, p
-stat.entries_histogram('skies')
+# stat.entries_histogram('skies')
+'''
