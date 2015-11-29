@@ -32,7 +32,7 @@ class Driver(object):
         self.num_scps = num_scps        
         MTA_dataframe = self._make_MTA_dataframe()
         WU_dataframe = self._make_WU_dataframe()
-        master_dataframe = dataframes.TurnstileWeatherDataFrame(MTA_dataframe, WU_dataframe)
+        master_dataframe = dataframes.CleanedTWDataFrame(MTA_dataframe, WU_dataframe)
         self.df = master_dataframe.df
         self._write_to_csv(filename)
 
@@ -60,12 +60,14 @@ class Driver(object):
         return self
         
         
-master_df_maker = Driver((3,1,2015), (11,1,2015), 8)
+# master_df_maker = Driver((11,23,2014), (11,27,2015), 8)
 '''
-stat = statistics.ExploratoryAnalysis(pd.read_csv('turnstile_weather.csv'))
-stat.only_include_busy_turnstiles()
-with_cond, without_cond, U, p = stat.mann_whitney_plus_means('skies')
-print with_cond, without_cond, p
-# stat.entries_histogram('skies')
+IMPORTANT NOTE: Time Square Station Turnstile Unit 01-00-07 loses all its data on 11/21/2014 @ 15:00:00
+http://web.mta.info/developers/data/nyct/turnstile/turnstile_141122.txt
+So to get the full year of data, go from 11/23-28/2014 to 11/23-28/2015
 '''
 
+stat = statistics.ExploratoryAnalysis(pd.read_csv('turnstile_weather.csv'))
+with_cond, without_cond, U, p = stat.mann_whitney_plus_means('temperature')
+print with_cond, without_cond, p
+stat.entries_histogram('temperature')

@@ -139,13 +139,6 @@ class MTADataFrame(DataFrame):
         self.df['Exits Per Hour'] = hourly_exits
         return self
 
-        
-    def _delete_unneeded_cols(self):
-        self.df = self.df.drop(['Date', 'Time', 'C/A', 'Unit', 'Scp', 'Linename', 'Division',], 1)
-        return self
-    
-    def _fill_nan_with_averages(self):
-        pass
     
 class WUDataFrame(DataFrame):
     def __init__(self, csv_filepath):
@@ -157,6 +150,9 @@ class WUDataFrame(DataFrame):
         
         self._delete_unneeded_cols()
         
+    def _clean_up(self):
+        pass
+    
     def _make_datetime_col(self):
         self.df['Weather Datetime'] = pd.Series('', index=self.df.index)
         UTC_to_EDT_conversion = timedelta(hours = 4) # needed to convert supplied datetimes to EDT
@@ -165,20 +161,6 @@ class WUDataFrame(DataFrame):
             datetime_obj = datetime.strptime(datetime_str, "%Y-%m-%d %H:%M:%S<br />")
             self.df.loc[row_idx, 'Weather Datetime'] = datetime_obj - UTC_to_EDT_conversion
         return self
-    
-    def _clean_up(self):
-        pass
-    
-    def _delete_unneeded_cols(self):
-        # depending on date range, will either be TimeEST or TimeEDT
-        ch = 'S'
-        if 'TimeEDT' in self.df.columns:
-            ch = 'D'
-        self.df = self.df.drop(['DateUTC<br />', 'TimeE'+ch+'T'], 1)
-        return self
-            
-    def _wrangle_wind_speed(self):
-        pass
             
 ### TurnstileWeatherDataFrame class:
     # purpose is to combine MTA dataframe and WU dataframe into one master dataframe
@@ -279,7 +261,23 @@ class TurnstileWeatherDataFrame(DataFrame): # TAKES IN PANDAS DATAFRAMES!
         upd_wu_df = self._updated_weather_df(WU_df, MTA_df)
         self.df = pd.concat([MTA_dataframe.df, upd_wu_df], axis=1)
         return self
+
+
+class CleanedTWDataFrame(TurnstileWeatherDataFrame):
+    def __init__(self, MTA_dataframe, WU_dataframe):
+        TurnstileWeatherDataFrame.__init__(MTA_dataframe, WU_dataframe)
         
+        self._delete_unneeded_cols()
+        self._rearrange()
+    
+    def _delete_unneeded_cols(self):
+        # depending on date range, will either be TimeEST or TimeEDT
+        ch = 'S'
+        if 'TimeEDT' in self.df.columns:
+            ch = 'D'
+        self.df = self.df.drop(['Date', 'Time', 'C/A', 'Unit', 'Scp', 'Linename', 'Division', 'DateUTC<br />', 'TimeE'+ch+'T'], 1)
+        return self
+
     def _rearrange(self):
         cols = self.df.columns.tolist()
         cols.insert(0, cols.pop(cols.index('Weather Datetime')))
