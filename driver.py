@@ -24,7 +24,6 @@ import tw_dates as dates
 import tw_links as links
 import file_writer
 import tw_dataframes as dataframes
-import tw_statistics as statistics
 
 class Driver(object):
     def __init__(self, (start_month, start_day, start_year), (end_month, end_day, end_year), num_scps, filename="turnstile_weather.csv"):
@@ -60,14 +59,9 @@ class Driver(object):
         return self
         
         
-# master_df_maker = Driver((11,23,2014), (11,27,2015), 8)
+master_df_maker = Driver((11,23,2014), (11,27,2015), 8)
 '''
 IMPORTANT NOTE: Time Square Station Turnstile Unit 01-00-07 loses all its data on 11/21/2014 @ 15:00:00
 http://web.mta.info/developers/data/nyct/turnstile/turnstile_141122.txt
 So to get the full year of data, go from 11/23-28/2014 to 11/23-28/2015
 '''
-
-stat = statistics.Analyzer(pd.read_csv('turnstile_weather.csv'))
-with_cond, without_cond, U, p = stat.mann_whitney_plus_means('temperature')
-print with_cond, without_cond, p
-stat.entries_histogram('temperature')
