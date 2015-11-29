@@ -20,11 +20,11 @@ of this project, the current code will suffice.
 
 import pandas as pd
 import datetime
-import turnstile_weather_dates as dates
-import turnstile_weather_links as links
+import tw_dates as dates
+import tw_links as links
 import file_writer
-import dataframes
-import turnstile_weather_statistics as statistics
+import tw_dataframes as dataframes
+import tw_statistics as statistics
 
 class Driver(object):
     def __init__(self, (start_month, start_day, start_year), (end_month, end_day, end_year), num_scps, filename="turnstile_weather.csv"):
