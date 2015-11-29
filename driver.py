@@ -24,7 +24,7 @@ import turnstile_weather_dates as dates
 import turnstile_weather_links as links
 import file_writer
 import dataframes
-import statistics
+import turnstile_weather_statistics as statistics
 
 class Driver(object):
     def __init__(self, (start_month, start_day, start_year), (end_month, end_day, end_year), num_scps, filename="turnstile_weather.csv"):
@@ -67,7 +67,7 @@ http://web.mta.info/developers/data/nyct/turnstile/turnstile_141122.txt
 So to get the full year of data, go from 11/23-28/2014 to 11/23-28/2015
 '''
 
-stat = statistics.ExploratoryAnalysis(pd.read_csv('turnstile_weather.csv'))
+stat = statistics.Analyzer(pd.read_csv('turnstile_weather.csv'))
 with_cond, without_cond, U, p = stat.mann_whitney_plus_means('temperature')
 print with_cond, without_cond, p
 stat.entries_histogram('temperature')
