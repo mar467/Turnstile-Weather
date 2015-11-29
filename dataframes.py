@@ -145,7 +145,7 @@ class WUDataFrame(DataFrame):
         
         self._clean_up()
         self._make_datetime_col()
-        self._delete_unneeded_cols()
+        # self._delete_unneeded_cols()
         
     def _make_datetime_col(self):
         self.df['Weather Datetime'] = pd.Series('', index=self.df.index)
