@@ -16,13 +16,14 @@ from datetime import datetime, timedelta
 class DataFrame(object):
     def __init__(self):
         self.df = pd.DataFrame()
-        
+
+
 class MTADataFrame(DataFrame):
     def __init__(self, csv_filepath):
         DataFrame.__init__(self)
         self.df = pd.read_csv(csv_filepath)
-        
         self._clean_up()
+        
         self._make_datetime_col()
         self._combine_scps()
         self._drop_scp()
@@ -36,6 +37,7 @@ class MTADataFrame(DataFrame):
             new_columns.append(self.df.columns[i].strip().title())
         self.df.columns = new_columns
         return self
+
 
     def _make_datetime_col(self):
         self.df['Subway Datetime'] = pd.Series('', index=self.df.index)
@@ -64,16 +66,26 @@ class MTADataFrame(DataFrame):
             # dataframe consisting of the data for all scps for a given date
             all_scps_for_date_df = old_df[old_df['Subway Datetime']==data_series['Subway Datetime']]
             
-            # the following code is in case there is a missing value in one the turnstiles for a specific datetime        
             additional_entries = 0
-            additional_exits = 0            
+            additional_exits = 0 
+            ###
+            # the following code is in case there is a missing value in one the turnstiles for a specific datetime                   
+            # if there is, the code will add the missing entries/exits to addtional_entries/exits respectively
+            # it does this by predicting what the missing entries/exits would be by taking the average of the
+            # entries/exits of the datetime before it with the same for the datetime after it
             if all_scps_for_date_df['Scp'].size != len(scp_arr):
                 all_scps = all_scps_for_date_df['Scp'].tolist()
                 missed_scps = list(set(scp_arr) - set(all_scps))
                 
                 for scp in missed_scps:
+                    # NOTE: in some cases, there may be an instance where the new_df read
+                    # will contain an odd time (say, 7:51 pm)
+                    # and no other scp will match that time
+                    # this will manifest itself as this code trying to predict the other 7 turnstiles
+                    # not desirable, of course, but is not currently a problem
+                    # maybe fix later?
+                
                     this_scp_df = old_df[old_df['Scp'] == scp]
-                    print 'scp is '+scp
                     
                     before_dt = this_scp_df[this_scp_df['Subway Datetime'] < data_series['Subway Datetime']]             
                     last_before_dt = before_dt.iloc[-1]                  
@@ -83,15 +95,11 @@ class MTADataFrame(DataFrame):
                     
                     additional_entries += (last_before_dt['Entries'] + first_after_dt['Entries'])/2.0
                     additional_exits += (last_before_dt['Exits'] + first_after_dt['Exits'])/2.0
-          
+            ###
             new_df.loc[row_idx, 'Entries'] = np.sum(all_scps_for_date_df['Entries']) + additional_entries
             new_df.loc[row_idx, 'Exits'] = np.sum(all_scps_for_date_df['Exits']) + additional_exits
 
-        self.df = new_df
-        
-    def _drop_scp(self):
-        self.df = self.df.drop(['Scp'], 1)
-        
+        self.df = new_df        
     
     def _make_hourly_entries_col(self):
         hourly_entries = pd.Series(0, index=self.df.index)
@@ -130,9 +138,10 @@ class MTADataFrame(DataFrame):
             
         self.df['Exits Per Hour'] = hourly_exits
         return self
+
         
     def _delete_unneeded_cols(self):
-        self.df = self.df.drop(['Date', 'Time'], 1)
+        self.df = self.df.drop(['Date', 'Time', 'C/A', 'Unit', 'Scp', 'Linename', 'Division',], 1)
         return self
     
     def _fill_nan_with_averages(self):
@@ -142,10 +151,11 @@ class WUDataFrame(DataFrame):
     def __init__(self, csv_filepath):
         DataFrame.__init__(self)
         self.df = pd.read_csv(csv_filepath)
-        
         self._clean_up()
+        
         self._make_datetime_col()
-        # self._delete_unneeded_cols()
+        
+        self._delete_unneeded_cols()
         
     def _make_datetime_col(self):
         self.df['Weather Datetime'] = pd.Series('', index=self.df.index)
@@ -160,7 +170,11 @@ class WUDataFrame(DataFrame):
         pass
     
     def _delete_unneeded_cols(self):
-        self.df = self.df.drop(['DateUTC<br />', 'TimeEDT'], 1)
+        # depending on date range, will either be TimeEST or TimeEDT
+        ch = 'S'
+        if 'TimeEDT' in self.df.columns:
+            ch = 'D'
+        self.df = self.df.drop(['DateUTC<br />', 'TimeE'+ch+'T'], 1)
         return self
             
     def _wrangle_wind_speed(self):
