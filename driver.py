@@ -59,7 +59,7 @@ class Driver(object):
         return self
         
         
-master_df_maker = Driver((11,23,2014), (11,27,2015), 8)
+master_csv_maker = Driver((11,23,2014), (11,27,2015), 8)
 '''
 IMPORTANT NOTE: Time Square Station Turnstile Unit 01-00-07 loses all its data on 11/21/2014 @ 15:00:00
 http://web.mta.info/developers/data/nyct/turnstile/turnstile_141122.txt
