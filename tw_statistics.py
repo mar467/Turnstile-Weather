@@ -14,6 +14,9 @@ import scipy.stats
 class WrangledDataFrame(object):
     def __init__(self, turnstile_weather_df):
         self.df = turnstile_weather_df
+        self._replace_calm_windspeeds()
+        self._replace_dashes_gusts()
+        self._make_neg9999s_nans()
         
     '''
     def only_include_busy_turnstiles(self):
@@ -28,6 +31,17 @@ class WrangledDataFrame(object):
     def _replace_dashes_gusts(self):
         self.df['Gust SpeedMPH'].replace('-', float('nan'), inplace=True)
         return self
+        
+    def _make_neg9999s_nans(self):
+        cols = ['TemperatureF', 'Dew PointF', 'Humidity', 'Sea Level PressureIn', 'VisibilityMPH', 'Wind SpeedMPH']
+        self.df[cols].replace(-9999, float('nan'), inplace=True)
+        return self
+        
+    def interpolation(self):
+        # NOTE: wind speed not included because only category that can vary drastically between 4 hour periods
+        cols = ['TemperatureF', 'Dew PointF', 'Humidity', 'Sea Level PressureIn', 'VisibilityMPH']
+        self.df[cols].interpolate()
+        
         
 class Analyzer(WrangledDataFrame):
     def __init__(self, turnstile_weather_df):
