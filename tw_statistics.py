@@ -20,6 +20,14 @@ class WrangledDataFrame(object):
         self.df = self.df[self.df['Entries'] > 10000]
         self.df['Entries Per Hour'] = self.df['Entries Per Hour'].fillna(0)
     '''
+    
+    def _replace_calm_windspeeds(self, val=0):
+        self.df['Wind SpeedMPH'].replace('Calm', val, inplace=True)
+        return self
+        
+    def _replace_dashes_gusts(self):
+        self.df['Gust SpeedMPH'].replace('-', float('nan'), inplace=True)
+        return self
         
 class Analyzer(WrangledDataFrame):
     def __init__(self, turnstile_weather_df):
