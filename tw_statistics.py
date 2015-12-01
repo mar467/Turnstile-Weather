@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 import scipy
 import scipy.stats
 from ggplot import ggplot, aes, geom_point, ggtitle
+from datetime import datetime
 
 class WrangledDataFrame(object):
     def __init__(self, turnstile_weather_df):
@@ -19,6 +20,8 @@ class WrangledDataFrame(object):
         self._replace_dashes_gusts()
         self._make_neg9999s_nans()
         self.interpolation()
+        self._fillna()
+        self._make_hour_col()
         
     '''
     def only_include_busy_turnstiles(self):
@@ -47,6 +50,23 @@ class WrangledDataFrame(object):
             self.df.loc[:,col].interpolate(inplace=True)
         return self
         
+    def _fillna(self):
+        cols = ['Entries Per Hour', 'Exits Per Hour']
+        for col in cols:
+            self.df.loc[:,col].fillna(0, inplace=True)
+        return self
+        
+    def _make_hour_col(self): #77386
+        self.df['Hour'] = pd.Series('', index=self.df.index)
+        self.df['Day'] = pd.Series('', index=self.df.index)
+        self.df['Month'] = pd.Series('', index=self.df.index)
+        for row_idx, data_series in self.df.iterrows():
+            datetime_str = data_series["Subway Datetime"]
+            datetime_obj = datetime.strptime(datetime_str, '%Y-%m-%d %H:%M:%S')
+            self.df.loc[row_idx, 'Hour'] = datetime_obj.hour
+            self.df.loc[row_idx, 'Day'] = datetime_obj.day
+            self.df.loc[row_idx, 'Month'] = datetime_obj.month
+        return self
         
 class Analyzer(WrangledDataFrame):
     def __init__(self, turnstile_weather_df):
@@ -163,11 +183,12 @@ class GradientDescent(WrangledDataFrame):
             theta = theta + alpha/(2*num_values)*np.dot(actual_values - predicted_values, features)
             
             cost_history.append(self._compute_cost(features, values, theta))
-        
+                    
+        print cost_history
         return theta, pd.Series(cost_history)
         
     def _make_predictions(self):
-        features = self.df[['TemperatureF', 'Dew PointF', 'Humidity', 'Sea Level PressureIn']]
+        features = self.df[['Hour', 'Day', 'Month', 'TemperatureF', 'Dew PointF', 'Humidity', 'Sea Level PressureIn']]
         features = self._normalize_features(features)
         
         values = self.df['Entries Per Hour']
