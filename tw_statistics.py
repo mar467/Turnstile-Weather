@@ -10,6 +10,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import scipy
 import scipy.stats
+from ggplot import ggplot, aes, geom_point, ggtitle
 
 class WrangledDataFrame(object):
     def __init__(self, turnstile_weather_df):
@@ -134,10 +135,12 @@ class GradientDescent(WrangledDataFrame):
     def __init__(self, turnstile_weather_df):
         WrangledDataFrame.__init__(self, turnstile_weather_df)
         self.df = turnstile_weather_df
+        predictions, plot = self._make_predictions()
+        self.predictions = predictions
         
-    def _normalize_dataframe(self):
-        self.df = (self.df - self.df.mean()) / self.df.std() # normalized
-        return self
+    def _normalize_features(self, features_df):
+        normalized_features_df = (features_df - features_df.mean()) / features_df.std() # normalization
+        return normalized_features_df
     
     def _compute_cost(self, features, values, theta):
         actual_values = values
@@ -149,6 +152,52 @@ class GradientDescent(WrangledDataFrame):
         return cost
     
     def _apply_gradient_descent(self, features, values, theta, alpha, num_iterations):
-        pass
-    
-    def
+        actual_values = values
+        num_values = len(values)
+        cost_history = []
+        
+        for i in range(num_iterations):
+            predicted_values = np.dot(features, theta)
+            
+            # update thetas
+            theta = theta + alpha/(2*num_values)*np.dot(actual_values - predicted_values, features)
+            
+            cost_history.append(self._compute_cost(features, values, theta))
+        
+        return theta, pd.Series(cost_history)
+        
+    def _make_predictions(self):
+        features = self.df[['TemperatureF', 'Dew PointF', 'Humidity', 'Sea Level PressureIn']]
+        features = self._normalize_features(features)
+        
+        values = self.df['Entries Per Hour']
+        
+        features['ones'] = np.ones(len(values))
+        
+        features_array = np.array(features)
+        values_array = np.array(values)
+        
+        alpha = 0.1
+        num_iterations = 75
+        
+        theta_gradient_descent = np.zeros(len(features.columns))
+        theta_gradient_descent, cost_history = self._apply_gradient_descent(features_array, 
+                                                                     values_array, 
+                                                                     theta_gradient_descent, 
+                                                                     alpha, 
+                                                                     num_iterations)
+        plot = None                                                          
+        #plot = self._plot_cost_history(alpha, cost_history)
+        
+        predictions = np.dot(features_array, theta_gradient_descent)
+        
+        return predictions, plot
+        
+    def _plot_cost_history(self, alpha, cost_history):
+        
+        cost_df = pd.DataFrame({ 'Cost_History': cost_history, 'Iteration': range(len(cost_history))})
+        
+        return ggplot(cost_df, aes('Iteration', 'Cost History')) + geom_point() + ggtitle('Cost History for alpha = %.3f' % alpha )
+        
+        
+        
