@@ -133,4 +133,22 @@ class Analyzer(WrangledDataFrame):
 class GradientDescent(WrangledDataFrame):
     def __init__(self, turnstile_weather_df):
         WrangledDataFrame.__init__(self, turnstile_weather_df)
+        self.df = turnstile_weather_df
         
+    def _normalize_dataframe(self):
+        self.df = (self.df - self.df.mean()) / self.df.std() # normalized
+        return self
+    
+    def _compute_cost(self, features, values, theta):
+        actual_values = values
+        predicted_values = np.dot(features, theta)
+        num_values = len(values)
+
+        cost = np.square(actual_values - predicted_values).sum() / (2*num_values)
+        
+        return cost
+    
+    def _apply_gradient_descent(self, features, values, theta, alpha, num_iterations):
+        pass
+    
+    def
