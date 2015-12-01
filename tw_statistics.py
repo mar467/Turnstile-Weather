@@ -17,6 +17,7 @@ class WrangledDataFrame(object):
         self._replace_calm_windspeeds()
         self._replace_dashes_gusts()
         self._make_neg9999s_nans()
+        self.interpolation()
         
     '''
     def only_include_busy_turnstiles(self):
@@ -29,18 +30,21 @@ class WrangledDataFrame(object):
         return self
         
     def _replace_dashes_gusts(self):
-        self.df['Gust SpeedMPH'].replace('-', float('nan'), inplace=True)
+        self.df['Gust SpeedMPH'].replace('-', np.nan, inplace=True)
         return self
         
     def _make_neg9999s_nans(self):
         cols = ['TemperatureF', 'Dew PointF', 'Humidity', 'Sea Level PressureIn', 'VisibilityMPH', 'Wind SpeedMPH']
-        self.df[cols].replace(-9999, float('nan'), inplace=True)
+        for col in cols:        
+            self.df.loc[:,col].replace(-9999, np.nan, inplace=True)
         return self
         
     def interpolation(self):
         # NOTE: wind speed not included because only category that can vary drastically between 4 hour periods
         cols = ['TemperatureF', 'Dew PointF', 'Humidity', 'Sea Level PressureIn', 'VisibilityMPH']
-        self.df[cols].interpolate()
+        for col in cols:        
+            self.df.loc[:,col].interpolate(inplace=True)
+        return self
         
         
 class Analyzer(WrangledDataFrame):
@@ -81,16 +85,19 @@ class Analyzer(WrangledDataFrame):
             without_cond = self.df[np.isnan(self.df["PrecipitationIn"])] # FIX AFTER WRANGLED
             
         elif selection == 'temperature':
-            with_cond = self.df["TemperatureF"]>50
-            without_cond = self.df["TemperatureF"]<50
+            mean = np.mean(self.df["TemperatureF"])
+            with_cond = self.df["TemperatureF"]>mean
+            without_cond = self.df["TemperatureF"]<mean
             
         elif selection == 'humidity':
-            with_cond = self.df["Humidity"]>56
-            without_cond = self.df["Humidity"]<56
+            mean = np.mean(self.df["Humidity"])
+            with_cond = self.df["Humidity"]>mean
+            without_cond = self.df["Humidity"]<mean
   
         elif selection == 'pressure':
-            with_cond = self.df["Sea Level PressureIn"]>33
-            without_cond = self.df["Sea Level PressureIn"]<33
+            mean = np.mean(self.df["Sea Level PressureIn"])
+            with_cond = self.df["Sea Level PressureIn"]>mean
+            without_cond = self.df["Sea Level PressureIn"]<mean
             
         else:
             print 'Not a valid selection.'
