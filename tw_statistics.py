@@ -48,6 +48,7 @@ class WrangledDataFrame(object):
         cols = ['TemperatureF', 'Dew PointF', 'Humidity', 'Sea Level PressureIn', 'VisibilityMPH']
         for col in cols:        
             self.df.loc[:,col].interpolate(inplace=True)
+        self.df.loc[:,"Wind SpeedMPH"].interpolate(inplace=True)
         return self
         
     def _fillna(self):
@@ -60,12 +61,14 @@ class WrangledDataFrame(object):
         self.df['Hour'] = pd.Series('', index=self.df.index)
         self.df['Day'] = pd.Series('', index=self.df.index)
         self.df['Month'] = pd.Series('', index=self.df.index)
+        self.df['Weekday'] = pd.Series('', index=self.df.index)
         for row_idx, data_series in self.df.iterrows():
             datetime_str = data_series["Subway Datetime"]
             datetime_obj = datetime.strptime(datetime_str, '%Y-%m-%d %H:%M:%S')
             self.df.loc[row_idx, 'Hour'] = datetime_obj.hour
             self.df.loc[row_idx, 'Day'] = datetime_obj.day
             self.df.loc[row_idx, 'Month'] = datetime_obj.month
+            self.df.loc[row_idx, 'Weekday'] = datetime_obj.weekday()
         return self
         
 class Analyzer(WrangledDataFrame):
@@ -188,7 +191,7 @@ class GradientDescent(WrangledDataFrame):
         return theta, pd.Series(cost_history)
         
     def _make_predictions(self):
-        features = self.df[['Hour', 'Day', 'Month', 'TemperatureF', 'Dew PointF', 'Humidity', 'Sea Level PressureIn']]
+        features = self.df[['Hour', 'Day', 'Month', 'Weekday', 'TemperatureF', 'Dew PointF', 'Humidity', 'Sea Level PressureIn']]
         features = self._normalize_features(features)
         
         values = self.df['Entries Per Hour']
@@ -198,8 +201,8 @@ class GradientDescent(WrangledDataFrame):
         features_array = np.array(features)
         values_array = np.array(values)
         
-        alpha = 0.1
-        num_iterations = 75
+        alpha = .5
+        num_iterations = 150
         
         theta_gradient_descent = np.zeros(len(features.columns))
         theta_gradient_descent, cost_history = self._apply_gradient_descent(features_array, 
