@@ -21,7 +21,7 @@ class WrangledDataFrame(object):
         self._make_neg9999s_nans()
         self.interpolation()
         self._fillna()
-        self._make_hour_col()
+        self._make_hour_col() # move to tw_dataframes
         
     '''
     def only_include_busy_turnstiles(self):
@@ -57,7 +57,7 @@ class WrangledDataFrame(object):
             self.df.loc[:,col].fillna(0, inplace=True)
         return self
         
-    def _make_hour_col(self): #77386
+    def _make_hour_col(self): # move to tw_dataframes
         self.df['Hour'] = pd.Series('', index=self.df.index)
         self.df['Day'] = pd.Series('', index=self.df.index)
         self.df['Month'] = pd.Series('', index=self.df.index)
@@ -193,6 +193,13 @@ class GradientDescent(WrangledDataFrame):
         return theta, pd.Series(cost_history)
         
     def _make_predictions(self):
+        '''
+        CLEAN THIS UP!!!
+        Fix features
+        Move R^2 prediction to separate method
+        '''        
+        
+        
         features = self.df[['TemperatureF', 'Dew PointF', 'Humidity', 'Sea Level PressureIn']]
         # 'Hour', 'Day', 'Month', 'Weekday'
         dummy_conditions = pd.get_dummies(self.df['Conditions'], prefix='unit')
