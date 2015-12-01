@@ -129,3 +129,8 @@ class Analyzer(WrangledDataFrame):
         U, p = scipy.stats.mannwhitneyu(cond, no_cond, use_continuity=True)
         return (cond.size, cond_mean), (cond.size, no_cond_mean), U, p
         
+        
+class GradientDescent(WrangledDataFrame):
+    def __init__(self, turnstile_weather_df):
+        WrangledDataFrame.__init__(self, turnstile_weather_df)
+        
