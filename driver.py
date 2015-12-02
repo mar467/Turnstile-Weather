@@ -59,7 +59,7 @@ class Driver(object):
         return self
         
         
-master_csv_maker = Driver((11,23,2014), (1,7,2015)) # defaults to Times Square
+master_csv_maker = Driver((11,23,2014), (11,27,2015)) # defaults to Times Square
 # GO FROM 11,23,2014 to 11,27,2015. Works excellently
 '''
 IMPORTANT NOTE: Time Square Station Turnstile Unit 01-00-07 loses all its data on 11/21/2014 @ 15:00:00

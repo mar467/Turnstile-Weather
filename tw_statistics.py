@@ -182,7 +182,6 @@ class GradientDescent(WrangledDataFrame):
             
             cost_history.append(self._compute_cost(features, values, theta))
                     
-        print cost_history
         return theta, pd.Series(cost_history)
         
     def _make_predictions(self):
@@ -221,7 +220,7 @@ class GradientDescent(WrangledDataFrame):
         # plot = self._plot_cost_history(alpha, cost_history)
         
         ''' R-squared value to be returned '''
-        data = self.df['Entries Per Hour']
+        data = self.df['TemperatureF']
         predictions = np.dot(features_array, theta_gradient_descent)
         r_squared = self._calculate_r_squared(data, predictions)
         
