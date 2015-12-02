@@ -12,6 +12,7 @@ Created on Mon Nov 23 11:11:28 2015
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
+from pandas.tseries.holiday import USFederalHolidayCalendar
 
 class DataFrame(object):
     def __init__(self):
@@ -45,7 +46,10 @@ class MTADataFrame(DataFrame):
             self.df['Day'] = pd.Series('', index=self.df.index)
             self.df['Month'] = pd.Series('', index=self.df.index)
             self.df['DayOfWeek'] = pd.Series('', index=self.df.index)
-            self.df['isWorkday'] = pd.Series(1, index=self.df.index)
+            self.df['isWorkday'] = pd.Series(1, index=self.df.index) # default to true
+            calendar = USFederalHolidayCalendar()
+            holidays = calendar.holidays(start='2014-11-19', end='2015-12-31').to_pydatetime() # CHANGE HOLIDAY RANGE HERE
+            self.df['isHoliday'] = pd.Series(0, index=self.df.index) # default to false
             
         for row_idx, data_series in self.df.iterrows():
             datetime_str = data_series["Date"]+' '+data_series["Time"]
@@ -58,6 +62,9 @@ class MTADataFrame(DataFrame):
                 self.df.loc[row_idx, 'DayOfWeek'] = datetime_obj.weekday()
                 if datetime_obj.weekday() > 4:
                     self.df.loc[row_idx, 'isWorkday'] = 0
+                date = datetime(datetime_obj.year, datetime_obj.month, datetime_obj.day)
+                if date in holidays:
+                    self.df.loc[row_idx, 'isHoliday'] = 1
         return self
         
     def _combine_scps(self):

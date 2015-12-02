@@ -65,3 +65,4 @@ IMPORTANT NOTE: Time Square Station Turnstile Unit 01-00-07 loses all its data o
 http://web.mta.info/developers/data/nyct/turnstile/turnstile_141122.txt
 So to get the full year of data, go from 11/23-28/2014 to 11/23-28/2015
 '''
+### ALSO: change holiday daterange in tw_datarames if you choose a longer range of dates!!!
