@@ -38,13 +38,26 @@ class MTADataFrame(DataFrame):
         self.df.columns = new_columns
         return self
 
-
-    def _make_datetime_col(self):
+    def _make_datetime_col(self, add_more_cols=True):
         self.df['Subway Datetime'] = pd.Series('', index=self.df.index)
+        if add_more_cols:
+            self.df['Hour'] = pd.Series('', index=self.df.index)
+            self.df['Day'] = pd.Series('', index=self.df.index)
+            self.df['Month'] = pd.Series('', index=self.df.index)
+            self.df['DayOfWeek'] = pd.Series('', index=self.df.index)
+            self.df['isWorkday'] = pd.Series(1, index=self.df.index)
+            
         for row_idx, data_series in self.df.iterrows():
             datetime_str = data_series["Date"]+' '+data_series["Time"]
             datetime_obj = datetime.strptime(datetime_str, '%m/%d/%Y %H:%M:%S')
             self.df.loc[row_idx, 'Subway Datetime'] = datetime_obj
+            if add_more_cols:
+                self.df.loc[row_idx, 'Hour'] = datetime_obj.hour
+                self.df.loc[row_idx, 'Day'] = datetime_obj.day
+                self.df.loc[row_idx, 'Month'] = datetime_obj.month
+                self.df.loc[row_idx, 'DayOfWeek'] = datetime_obj.weekday()
+                if datetime_obj.weekday() > 4:
+                    self.df.loc[row_idx, 'isWorkday'] = 0
         return self
         
     def _combine_scps(self):

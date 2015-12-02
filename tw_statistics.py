@@ -10,7 +10,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import scipy
 import scipy.stats
-from ggplot import ggplot, aes, geom_point, ggtitle
+from ggplot import *
 from datetime import datetime
 
 class WrangledDataFrame(object):
@@ -55,23 +55,6 @@ class WrangledDataFrame(object):
         cols = ['Entries Per Hour', 'Exits Per Hour']
         for col in cols:
             self.df.loc[:,col].fillna(0, inplace=True)
-        return self
-        
-    def _make_hour_col(self): # move to tw_dataframes
-        self.df['Hour'] = pd.Series('', index=self.df.index)
-        self.df['Day'] = pd.Series('', index=self.df.index)
-        self.df['Month'] = pd.Series('', index=self.df.index)
-        self.df['Weekday'] = pd.Series('', index=self.df.index)
-        self.df['isWeekend'] = pd.Series(0, index=self.df.index)
-        for row_idx, data_series in self.df.iterrows():
-            datetime_str = data_series["Subway Datetime"]
-            datetime_obj = datetime.strptime(datetime_str, '%Y-%m-%d %H:%M:%S')
-            self.df.loc[row_idx, 'Hour'] = datetime_obj.hour
-            self.df.loc[row_idx, 'Day'] = datetime_obj.day
-            self.df.loc[row_idx, 'Month'] = datetime_obj.month
-            self.df.loc[row_idx, 'Weekday'] = datetime_obj.weekday()
-            if datetime_obj.weekday() > 4:
-                self.df.loc[row_idx, 'isWeekend'] = 1
         return self
         
 class Analyzer(WrangledDataFrame):
@@ -223,9 +206,8 @@ class GradientDescent(WrangledDataFrame):
                                                                      values_array, 
                                                                      theta_gradient_descent, 
                                                                      alpha, 
-                                                                     num_iterations)
-        plot = None                                                          
-        #plot = self._plot_cost_history(alpha, cost_history)
+                                                                     num_iterations)                                                         
+        plot = self._plot_cost_history(alpha, cost_history)
         
         data = self.df['Entries Per Hour']
         predictions = np.dot(features_array, theta_gradient_descent)
