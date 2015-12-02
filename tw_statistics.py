@@ -153,8 +153,8 @@ class GradientDescent(WrangledDataFrame):
     def __init__(self, turnstile_weather_df):
         WrangledDataFrame.__init__(self, turnstile_weather_df)
         self.df = turnstile_weather_df
-        predictions, plot, r_squared = self._make_predictions()
-        print r_squared
+        self.predictions, self.plot, self.r_squared = self._make_predictions()
+
         
     def _normalize_features(self, features_df):
         normalized_features_df = (features_df - features_df.mean()) / features_df.std() # normalization
@@ -183,6 +183,17 @@ class GradientDescent(WrangledDataFrame):
             cost_history.append(self._compute_cost(features, values, theta))
                     
         return theta, pd.Series(cost_history)
+        
+    def _calculate_r_squared(self, data, predictions):
+        r_squared = 1 - (np.square(data - predictions).sum())/(np.square(data - np.mean(data)).sum())
+        return r_squared
+    
+    def _plot_cost_history(self, alpha, cost_history):
+        # Stupidly enough, the name of the X or Y cannot exceed 4 characters...
+        iteration = range(len(cost_history))
+        cost_df = pd.DataFrame({'Cost': cost_history, 'Iter': iteration})
+        plot = ggplot(aes(x='Iter', y='Cost'), data=cost_df) + geom_point() + geom_line() + ggtitle('Cost History for alpha = %.3f' % alpha )
+        return plot
         
     def _make_predictions(self):
         ###
@@ -215,25 +226,17 @@ class GradientDescent(WrangledDataFrame):
                                                                      theta_gradient_descent, 
                                                                      alpha, 
                                                                      num_iterations) 
-        ''' Plot to be returned '''
-        plot = None
-        # plot = self._plot_cost_history(alpha, cost_history)
-        
-        ''' R-squared value to be returned '''
-        data = self.df['TemperatureF']
         predictions = np.dot(features_array, theta_gradient_descent)
-        r_squared = self._calculate_r_squared(data, predictions)
+        
+        ''' Plot '''
+        plot = self._plot_cost_history(alpha, cost_history)
+        
+        ''' R-squared value '''
+        r_squared = self._calculate_r_squared(values, predictions)
         
         return predictions, plot, r_squared
         
-        
-    def _calculate_r_squared(self, data, predictions):
-        r_squared = 1 - (np.square(data - predictions).sum())/(np.square(data - np.mean(data)).sum())
-        return r_squared
-    
-    def _plot_cost_history(self, alpha, cost_history):
-        cost_df = pd.DataFrame({ 'Cost_History': cost_history, 'Iteration': range(len(cost_history))})
-        return ggplot(cost_df, aes('Iteration', 'Cost History')) + geom_point() + ggtitle('Cost History for alpha = %.3f' % alpha )
+
         
         
         
