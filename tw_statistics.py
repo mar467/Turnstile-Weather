@@ -181,6 +181,7 @@ class GradientDescent(WrangledDataFrame):
             
             cost_history.append(self._compute_cost(features, values, theta))
                     
+        print cost_history
         return theta, pd.Series(cost_history)
         
     def _make_predictions(self):
@@ -190,26 +191,30 @@ class GradientDescent(WrangledDataFrame):
         Move R^2 prediction to separate method
         '''        
         
-        features = self.df[[]]
+        # features = self.df[['Hour', 'Day', 'Month', 'DayOfWeek', 'isWorkday', 'isHoliday']]
+        features = self.df[['TemperatureF', 'Dew PointF', 'Humidity', 'Sea Level PressureIn', 'Wind SpeedMPH']]
         
-        
-        features = self.df[['TemperatureF', 'Dew PointF', 'Humidity', 'Sea Level PressureIn']]
-        # 'Hour', 'Day', 'Month', 'Weekday'
-        dummy_conditions = pd.get_dummies(self.df['Conditions'], prefix='unit')
-        
-        features = features.join(dummy_conditions)
+        '''
+        datetime_fts = self.df[['Hour', 'Day', 'Month', 'DayOfWeek', 'isWorkday', 'isHoliday']]
+        major_weather_fts = self.df[['TemperatureF', 'Dew PointF', 'Humidity', 'Sea Level PressureIn']]
+        minor_weather_fts = self.df[['VisibilityMPH', 'Gusts', 'PrecipitationIn', 'WindDirDegrees']]
+        # dummy_subway_stations = pd.get_dummies(self.df['Station'])         
+        dummy_events = pd.get_dummies(self.df['Events'])
+        dummy_conditions = pd.get_dummies(self.df['Conditions'])        
+
+        features.join([datetime_fts, major_weather_fts, minor_weather_fts])
+        '''
         features = self._normalize_features(features)
         
         values = self.df['Entries Per Hour']
         
         features['ones'] = np.ones(len(values))
 
-        
         features_array = np.array(features)
         values_array = np.array(values)
         
         alpha = .1
-        num_iterations = 150
+        num_iterations = 75
         
         theta_gradient_descent = np.zeros(len(features.columns))
         theta_gradient_descent, cost_history = self._apply_gradient_descent(features_array, 
@@ -217,7 +222,8 @@ class GradientDescent(WrangledDataFrame):
                                                                      theta_gradient_descent, 
                                                                      alpha, 
                                                                      num_iterations)                                                         
-        plot = self._plot_cost_history(alpha, cost_history)
+        plot = None
+        # plot = self._plot_cost_history(alpha, cost_history)
         
         data = self.df['Entries Per Hour']
         predictions = np.dot(features_array, theta_gradient_descent)
