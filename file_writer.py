@@ -16,7 +16,12 @@ class MasterFileWriter(object):
         return os.path.realpath(self._filename)
     
 class MTAMasterFileWriter(MasterFileWriter):
-    def __init__(self, mta_ezlink_list, filename='MTA_master_file.txt', num_scps=4):
+    ''' 
+    NOTE: this code can be easily modified to read from MULTIPLE stations
+    Simply run the _one_station method multiple times, but name each resulting file a different filename
+    Then combine all the files together, skipping the header on all but the first
+    '''
+    def __init__(self, mta_ezlink_list, filename='MTA_master_file.txt', station_name="42 ST-TIMES SQ"):
         MasterFileWriter.__init__(self, filename)
         
         self._f_ins = [] # list of read files
@@ -24,7 +29,7 @@ class MTAMasterFileWriter(MasterFileWriter):
             self._f_ins.append(urlopen(mta_ezlink.url))
         
         with open(self._filename, 'w') as master_file:
-            self._first_n_scps(master_file, self._f_ins, num_scps)
+            self._one_station(master_file, self._f_ins, station_name)
             
      
     ###
@@ -34,7 +39,7 @@ class MTAMasterFileWriter(MasterFileWriter):
             # and THEN move on to the next turnstile unit
     ###
      
-    def _first_n_scps(self, master_file, f_ins, num_scps=8): # scp = sub channel position (turnstile unit identifier)
+    def _one_station(self, master_file, f_ins, station_name):
         '''
         This specific solution avoids using x = file.tell() or file.seek(x), simply because reading a url file
         with urlopen won't allow for it. However, using these two methods would have allowed me flexibility in,
@@ -52,14 +57,12 @@ class MTAMasterFileWriter(MasterFileWriter):
             
         master_file.write(header) # write the header just once
 
-        ''' NEW ADDITION: skipping to Times Square '''
+        ''' NEW ADDITION: skipping to desired station '''
         for i in range(0, len(f_ins)): # for each file...
-            while last_lines[i].split(",")[3] != "42 ST-TIMES SQ": # while the line does not refer to Times Square
+            while last_lines[i].split(",")[3] != station_name: # while the line does not refer to the station in question
                 last_lines[i] = f_ins[i].readline() # skip the line        
         
-        scp_num = 0
-        
-        while(scp_num < num_scps):     
+        while(last_lines[0].split(",") == station_name):
             for i in range(0, len(f_ins)): # for each file...
                 master_file.write(last_lines[i]) # write the line last left off at
                 prev_line = last_lines[i]
@@ -76,7 +79,6 @@ class MTAMasterFileWriter(MasterFileWriter):
                     
                 last_lines[i] = curr_line # record the line of the first new turnstile unit
                 # repeat the process for next file
-            scp_num += 1
             
         for f_in in f_ins:
             f_in.close()

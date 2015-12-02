@@ -26,9 +26,9 @@ import file_writer
 import tw_dataframes as dataframes
 
 class Driver(object):
-    def __init__(self, (start_month, start_day, start_year), (end_month, end_day, end_year), num_scps, filename="turnstile_weather.csv"):
+    def __init__(self, (start_month, start_day, start_year), (end_month, end_day, end_year), station_name="42 ST-TIMES SQ", filename="turnstile_weather.csv"):
         self._make_start_end_dates((start_month, start_day, start_year), (end_month, end_day, end_year))
-        self.num_scps = num_scps        
+        self.station_name = station_name      
         MTA_dataframe = self._make_MTA_dataframe()
         WU_dataframe = self._make_WU_dataframe()
         master_dataframe = dataframes.CleanedTWDataFrame(MTA_dataframe, WU_dataframe)
@@ -45,7 +45,7 @@ class Driver(object):
     def _make_MTA_dataframe(self):
         MTA_ezdates = dates.MTAEasyDateList(self._ezdate_min, self._ezdate_max)
         MTA_ezlinks = links.MTAEasyLinkList(MTA_ezdates)
-        MTA_master_file = file_writer.MTAMasterFileWriter(MTA_ezlinks, num_scps=self.num_scps)
+        MTA_master_file = file_writer.MTAMasterFileWriter(MTA_ezlinks, num_scps=self.station_name)
         return dataframes.MTADataFrame(MTA_master_file.get_path())
         
     def _make_WU_dataframe(self):
@@ -59,7 +59,7 @@ class Driver(object):
         return self
         
         
-master_csv_maker = Driver((11,23,2014), (11,27,2015), 8)
+master_csv_maker = Driver((11,23,2014), (11,27,2015)) # defaults to TImes Square
 '''
 IMPORTANT NOTE: Time Square Station Turnstile Unit 01-00-07 loses all its data on 11/21/2014 @ 15:00:00
 http://web.mta.info/developers/data/nyct/turnstile/turnstile_141122.txt
