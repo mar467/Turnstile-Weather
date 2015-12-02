@@ -16,18 +16,20 @@ from datetime import datetime
 class WrangledDataFrame(object):
     def __init__(self, turnstile_weather_df):
         self.df = turnstile_weather_df
+        self._fill_nan_entries_exits()
         self._replace_calm_windspeeds()
-        self._replace_dashes_gusts()
+        self._make_gusts_binary()
+        self._fill_nan_precipitation()
+        self._fill_nan_events()
         self._make_neg9999s_nans()
-        self.interpolation()
-        self._fillna()
-        self._make_hour_col() # move to tw_dataframes
+        self._interpolation()
         
-    '''
-    def only_include_busy_turnstiles(self):
-        self.df = self.df[self.df['Entries'] > 10000]
-        self.df['Entries Per Hour'] = self.df['Entries Per Hour'].fillna(0)
-    '''
+                
+    def _fill_nan_entries_exits(self):
+        cols = ['Entries Per Hour', 'Exits Per Hour']
+        for col in cols:
+            self.df.loc[:,col].fillna(0, inplace=True)
+        return self        
     
     def _replace_calm_windspeeds(self, val=0):
         self.df['Wind SpeedMPH'].replace('Calm', val, inplace=True)
@@ -41,24 +43,26 @@ class WrangledDataFrame(object):
                 self.df.loc[row_idx, 'Gusts'] = 1
         return self
         
+    def _fill_nan_precipitation(self):
+        self.df['PrecipitationIn'].fillna(0, inplace=True)
+        return self
+        
+    def _fill_nan_events(self):
+        self.df['Events'].fillna('None', inplace=True)
+        return self
+        
     def _make_neg9999s_nans(self):
         cols = ['TemperatureF', 'Dew PointF', 'Humidity', 'Sea Level PressureIn', 'VisibilityMPH', 'Wind SpeedMPH']
         for col in cols:        
             self.df.loc[:,col].replace(-9999, np.nan, inplace=True)
         return self
         
-    def interpolation(self):
-        # NOTE: wind speed not included because only category that can vary drastically between 4 hour periods
-        cols = ['TemperatureF', 'Dew PointF', 'Humidity', 'Sea Level PressureIn', 'VisibilityMPH']
+    def _interpolation(self):
+        # NOTE: wind speed interpolated, despite fact that it can vary drastically between 4 hour periods
+        cols = ['TemperatureF', 'Dew PointF', 'Humidity', 'Sea Level PressureIn', 'VisibilityMPH', 'Wind SpeedMPH']
         for col in cols:        
             self.df.loc[:,col].interpolate(inplace=True)
         self.df.loc[:,"Wind SpeedMPH"].interpolate(inplace=True)
-        return self
-        
-    def _fillna(self):
-        cols = ['Entries Per Hour', 'Exits Per Hour']
-        for col in cols:
-            self.df.loc[:,col].fillna(0, inplace=True)
         return self
         
 class Analyzer(WrangledDataFrame):
