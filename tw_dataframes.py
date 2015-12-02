@@ -27,10 +27,8 @@ class MTADataFrame(DataFrame):
         
         self._make_datetime_col()
         self._combine_scps()
-        self._drop_scp()
         self._make_hourly_entries_col()
         self._make_hourly_exits_col()
-        self._delete_unneeded_cols()
         
     def _clean_up(self):
         new_columns = []
@@ -178,8 +176,6 @@ class WUDataFrame(DataFrame):
         
         self._make_datetime_col()
         
-        self._delete_unneeded_cols()
-        
     def _clean_up(self):
         pass
     
@@ -295,7 +291,7 @@ class TurnstileWeatherDataFrame(DataFrame): # TAKES IN PANDAS DATAFRAMES!
 
 class CleanedTWDataFrame(TurnstileWeatherDataFrame):
     def __init__(self, MTA_dataframe, WU_dataframe):
-        TurnstileWeatherDataFrame.__init__(MTA_dataframe, WU_dataframe)
+        TurnstileWeatherDataFrame.__init__(self, MTA_dataframe, WU_dataframe)
         
         self._delete_unneeded_cols()
         self._rearrange()

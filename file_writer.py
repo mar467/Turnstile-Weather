@@ -62,7 +62,7 @@ class MTAMasterFileWriter(MasterFileWriter):
             while last_lines[i].split(",")[3] != station_name: # while the line does not refer to the station in question
                 last_lines[i] = f_ins[i].readline() # skip the line        
         
-        while(last_lines[0].split(",") == station_name):
+        while(last_lines[0].split(",")[3] == station_name):
             for i in range(0, len(f_ins)): # for each file...
                 master_file.write(last_lines[i]) # write the line last left off at
                 prev_line = last_lines[i]
