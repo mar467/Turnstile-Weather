@@ -67,7 +67,17 @@ class MTADataFrame(DataFrame):
                     self.df.loc[row_idx, 'isHoliday'] = 1
         return self
         
+    ###
+        # The following method combines data from ALL the turnstile units within a single subway station
+        # This makes subsequent statistical analysis easier
+        # scp = sub channel position (turnstile unit identifier)
+    ###
     def _combine_scps(self):
+        '''
+        NOTE:
+        This code does not currently distinguish between different subway STATIONS
+        It assumes the dataframe only is for one subway station
+        '''
         
         def end_index_first_scp(df):
             first_scp = df.loc[0, 'Scp']
