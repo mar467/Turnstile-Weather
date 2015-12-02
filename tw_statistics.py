@@ -33,6 +33,7 @@ class WrangledDataFrame(object):
     
     def _replace_calm_windspeeds(self, val=0):
         self.df['Wind SpeedMPH'].replace('Calm', val, inplace=True)
+        self.df['Wind SpeedMPH'] = self.df['Wind SpeedMPH'].astype(float)
         return self
         
     def _make_gusts_binary(self):
@@ -152,8 +153,8 @@ class GradientDescent(WrangledDataFrame):
     def __init__(self, turnstile_weather_df):
         WrangledDataFrame.__init__(self, turnstile_weather_df)
         self.df = turnstile_weather_df
-        predictions, plot = self._make_predictions()
-        self.predictions = predictions
+        predictions, plot, r_squared = self._make_predictions()
+        print r_squared
         
     def _normalize_features(self, features_df):
         normalized_features_df = (features_df - features_df.mean()) / features_df.std() # normalization
@@ -185,57 +186,54 @@ class GradientDescent(WrangledDataFrame):
         return theta, pd.Series(cost_history)
         
     def _make_predictions(self):
-        '''
-        CLEAN THIS UP!!!
-        Fix features
-        Move R^2 prediction to separate method
-        '''        
-        
-        # features = self.df[['Hour', 'Day', 'Month', 'DayOfWeek', 'isWorkday', 'isHoliday']]
-        features = self.df[['TemperatureF', 'Dew PointF', 'Humidity', 'Sea Level PressureIn', 'Wind SpeedMPH']]
-        
-        '''
+        ###
         datetime_fts = self.df[['Hour', 'Day', 'Month', 'DayOfWeek', 'isWorkday', 'isHoliday']]
+        dummy_subway_stations = pd.get_dummies(self.df['Station'])
         major_weather_fts = self.df[['TemperatureF', 'Dew PointF', 'Humidity', 'Sea Level PressureIn']]
         minor_weather_fts = self.df[['VisibilityMPH', 'Gusts', 'PrecipitationIn', 'WindDirDegrees']]
-        # dummy_subway_stations = pd.get_dummies(self.df['Station'])         
-        dummy_events = pd.get_dummies(self.df['Events'])
-        dummy_conditions = pd.get_dummies(self.df['Conditions'])        
-
-        features.join([datetime_fts, major_weather_fts, minor_weather_fts])
-        '''
+        dummy_conditions = pd.get_dummies(self.df['Conditions']) # events naturally included in this df 
+        ###
+        
+        # which of the above features to include in predictive analysis
+        features =  datetime_fts.join([major_weather_fts, minor_weather_fts, dummy_conditions])
         features = self._normalize_features(features)
         
+        # what we are attempting to predict
         values = self.df['Entries Per Hour']
         
+        # necessary column of 1s (y-intercept)
         features['ones'] = np.ones(len(values))
 
         features_array = np.array(features)
         values_array = np.array(values)
         
+        ''' Application of Gradient Descent '''
         alpha = .1
         num_iterations = 75
-        
         theta_gradient_descent = np.zeros(len(features.columns))
         theta_gradient_descent, cost_history = self._apply_gradient_descent(features_array, 
                                                                      values_array, 
                                                                      theta_gradient_descent, 
                                                                      alpha, 
-                                                                     num_iterations)                                                         
+                                                                     num_iterations) 
+        ''' Plot to be returned '''
         plot = None
         # plot = self._plot_cost_history(alpha, cost_history)
         
+        ''' R-squared value to be returned '''
         data = self.df['Entries Per Hour']
         predictions = np.dot(features_array, theta_gradient_descent)
+        r_squared = self._calculate_r_squared(data, predictions)
+        
+        return predictions, plot, r_squared
+        
+        
+    def _calculate_r_squared(self, data, predictions):
         r_squared = 1 - (np.square(data - predictions).sum())/(np.square(data - np.mean(data)).sum())
-        print r_squared
-        
-        return predictions, plot
-        
+        return r_squared
+    
     def _plot_cost_history(self, alpha, cost_history):
-        
         cost_df = pd.DataFrame({ 'Cost_History': cost_history, 'Iteration': range(len(cost_history))})
-        
         return ggplot(cost_df, aes('Iteration', 'Cost History')) + geom_point() + ggtitle('Cost History for alpha = %.3f' % alpha )
         
         
