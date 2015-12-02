@@ -33,8 +33,12 @@ class WrangledDataFrame(object):
         self.df['Wind SpeedMPH'].replace('Calm', val, inplace=True)
         return self
         
-    def _replace_dashes_gusts(self):
-        self.df['Gust SpeedMPH'].replace('-', np.nan, inplace=True)
+    def _make_gusts_binary(self):
+        self.df.rename(columns={'Gust SpeedMPH': 'Gusts'}, inplace=True)
+        self.df['Gusts'].replace('-', 0, inplace=True)
+        for row_idx, gust_speed in self.df['Gusts'].iteritems():
+            if gust_speed > 0:
+                self.df.loc[row_idx, 'Gusts'] = 1
         return self
         
     def _make_neg9999s_nans(self):
@@ -181,6 +185,8 @@ class GradientDescent(WrangledDataFrame):
         Fix features
         Move R^2 prediction to separate method
         '''        
+        
+        features = self.df[[]]
         
         
         features = self.df[['TemperatureF', 'Dew PointF', 'Humidity', 'Sea Level PressureIn']]
