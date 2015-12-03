@@ -148,12 +148,26 @@ class Analyzer(WrangledDataFrame):
         U, p = scipy.stats.mannwhitneyu(cond, no_cond, use_continuity=True)
         return (cond.size, cond_mean), (cond.size, no_cond_mean), U, p
         
+class Visualizer(WrangledDataFrame):
+    def __init__(self, turnstile_weather_df):
+        WrangledDataFrame.__init__(self, turnstile_weather_df)
+        self._make_timestamps()
+        self.plot()
+        
+    def _make_timestamps(self):
+        self.df['Timestamp'] = pd.Series(0, index=self.df.index)
+        for row_idx, data_series in self.df.iterrows():
+            self.df.loc[row_idx, 'Timestamp'] = pd.to_datetime(data_series['Subway Datetime'])
+
+    def plot(self):
+        self.graph = ggplot(aes(x='Timestamp', y='Entries Per Hour'), data=self.df) + geom_line(color='red')
+
         
 class GradientDescent(WrangledDataFrame):
     def __init__(self, turnstile_weather_df):
         WrangledDataFrame.__init__(self, turnstile_weather_df)
         self.df = turnstile_weather_df
-        self.predictions, self.plot, self.r_squared = self._make_predictions()
+        self._make_predictions()
 
         
     def _normalize_features(self, features_df):
@@ -184,16 +198,26 @@ class GradientDescent(WrangledDataFrame):
                     
         return theta, pd.Series(cost_history)
         
-    def _calculate_r_squared(self, data, predictions):
-        r_squared = 1 - (np.square(data - predictions).sum())/(np.square(data - np.mean(data)).sum())
-        return r_squared
-    
     def _plot_cost_history(self, alpha, cost_history):
         # Stupidly enough, the name of the X or Y cannot exceed 4 characters...
         iteration = range(len(cost_history))
         cost_df = pd.DataFrame({'Cost': cost_history, 'Iter': iteration})
         plot = ggplot(aes(x='Iter', y='Cost'), data=cost_df) + geom_point() + geom_line() + ggtitle('Cost History for alpha = %.3f' % alpha )
-        return plot
+        self.cost_history_plot = plot
+        return self
+        
+    def _plot_residuals(self, data, predictions):
+        plt.figure()
+        differences = data - predictions
+        differences.hist(bins=range(-1000, 1500, 100))
+        self.residual_plot = plt
+        return self
+        
+    def _calculate_r_squared(self, data, predictions):
+        r_squared = 1 - (np.square(data - predictions).sum())/(np.square(data - np.mean(data)).sum())
+        self.r_squared = r_squared
+        return self
+    
         
     def _make_predictions(self):
         ###
@@ -226,15 +250,20 @@ class GradientDescent(WrangledDataFrame):
                                                                      theta_gradient_descent, 
                                                                      alpha, 
                                                                      num_iterations) 
-        predictions = np.dot(features_array, theta_gradient_descent)
+                                                                
+        ''' Predictions '''   
+        self.predictions = np.dot(features_array, theta_gradient_descent)
         
-        ''' Plot '''
-        plot = self._plot_cost_history(alpha, cost_history)
+        ''' Cost History Plot '''
+        self._plot_cost_history(alpha, cost_history)
         
-        ''' R-squared value '''
-        r_squared = self._calculate_r_squared(values, predictions)
+        ''' Residual Plot '''
+        self._plot_residuals(values, self.predictions)
         
-        return predictions, plot, r_squared
+        ''' R-Squared Value '''
+        self._calculate_r_squared(values, self.predictions)
+        
+        return self
         
 
         
