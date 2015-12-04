@@ -152,16 +152,40 @@ class Visualizer(WrangledDataFrame):
     def __init__(self, turnstile_weather_df):
         WrangledDataFrame.__init__(self, turnstile_weather_df)
         self._make_timestamps()
+        self._make_time_cols()
+        self._group_by()
         self.plot()
+        # stat2.df.groupby('Month').mean()
+        
+    def _delete_same_dayofyears(self):
+        # might not be necessary
+        # I say, instead of that, figure out how to group by DAY
+        # not DAY OF YEAR, yeah?
+        # so when you plot it, there is no hour consideration... it just averages
+        pass
         
     def _make_timestamps(self):
-        self.df['Timestamp'] = pd.Series(0, index=self.df.index)
+        self.df['Subway Datetime'] = pd.to_datetime(self.df['Subway Datetime'])
+        return self
+        
+    def _make_time_cols(self):
+        self.df['DayOfYear'] = pd.Series(0, index=self.df.index)
+        self.df['WeekOfYear'] = pd.Series(0, index=self.df.index)
         for row_idx, data_series in self.df.iterrows():
-            self.df.loc[row_idx, 'Timestamp'] = pd.to_datetime(data_series['Subway Datetime'])
+            self.df.loc[row_idx, 'DayOfYear'] = data_series['Subway Datetime'].dayofyear
+            self.df.loc[row_idx, 'WeekOfYear'] = data_series['Subway Datetime'].weekofyear
+        return self
+            
+    def _group_by(self, col='DayOfYear'):
+        self.df = self.df.groupby(col, as_index=False).mean()
+        return self
 
     def plot(self):
-        self.graph = ggplot(aes(x='Timestamp', y='Entries Per Hour'), data=self.df) + geom_line(color='red')
+        self.df = self.df[self.df['isWorkday']==1]
+        self.graph = ggplot(aes(x='DayOfYear', y='Entries Per Hour'), data=self.df) + geom_line(color='red')
 
+    def ezplot(self):
+        self.df.plot() # very easy way to plot with dataframes
         
 class GradientDescent(WrangledDataFrame):
     def __init__(self, turnstile_weather_df):
