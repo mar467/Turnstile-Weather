@@ -172,7 +172,7 @@ class WUDataFrame(DataFrame):
         pass
     
     def _make_datetime_col(self):
-        self.df['Weather Datetime'] = pd.to_datetime('DateUTC<br/>', format="%Y-%m-%d %H:%M:%S<br />") + timedelta(hours = 4) # needed to convert supplied datetimes to EDT
+        self.df['Weather Datetime'] = pd.to_datetime(self.df['DateUTC<br />'], format="%Y-%m-%d %H:%M:%S<br />") + timedelta(hours = 4) # needed to convert supplied datetimes to EDT
         return self
             
 ### TurnstileWeatherDataFrame class:
@@ -279,8 +279,8 @@ class TurnstileWeatherDataFrame(DataFrame): # TAKES IN PANDAS DATAFRAMES!
 class CleanedTWDataFrame(TurnstileWeatherDataFrame):
     def __init__(self, MTA_dataframe, WU_dataframe):
         TurnstileWeatherDataFrame.__init__(self, MTA_dataframe, WU_dataframe)
-        
-        self._delete_unneeded_cols()
+        print self.df
+        # self._delete_unneeded_cols()
         self._rearrange()
     
     def _delete_unneeded_cols(self):
