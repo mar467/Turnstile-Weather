@@ -38,31 +38,20 @@ class MTADataFrame(DataFrame):
         return self
 
     def _make_datetime_col(self, add_more_cols=True):
-        self.df['Subway Datetime'] = pd.Series('', index=self.df.index)
+        datetimes = pd.to_datetime(self.df['Date']+' '+self.df['Time'], format='%m/%d/%Y %H:%M:%S')       
+        self.df['Subway Datetime'] = datetimes
+
         if add_more_cols:
-            self.df['Hour'] = pd.Series('', index=self.df.index)
-            self.df['Day'] = pd.Series('', index=self.df.index)
-            self.df['Month'] = pd.Series('', index=self.df.index)
-            self.df['DayOfWeek'] = pd.Series('', index=self.df.index)
-            self.df['isWorkday'] = pd.Series(1, index=self.df.index) # default to true
+            self.df['Date'] = datetimes.apply(lambda dt: dt.date())
+            self.df['Month'] = datetimes.apply(lambda dt: dt.month)
+            self.df['Hour'] = datetimes.apply(lambda dt: dt.hour)
+            self.df['DayOfWeek'] = datetimes.apply(lambda dt: dt.dayofweek)
+            self.df['isWorkday'] = self.df['DayOfWeek'].apply(lambda weekday: 1 if weekday<5 else 0)
+            
             calendar = USFederalHolidayCalendar()
             holidays = calendar.holidays(start='2014-11-19', end='2015-12-31').to_pydatetime() # CHANGE HOLIDAY RANGE HERE
-            self.df['isHoliday'] = pd.Series(0, index=self.df.index) # default to false
-            
-        for row_idx, data_series in self.df.iterrows():
-            datetime_str = data_series["Date"]+' '+data_series["Time"]
-            datetime_obj = datetime.strptime(datetime_str, '%m/%d/%Y %H:%M:%S')
-            self.df.loc[row_idx, 'Subway Datetime'] = datetime_obj
-            if add_more_cols:
-                self.df.loc[row_idx, 'Hour'] = datetime_obj.hour
-                self.df.loc[row_idx, 'Day'] = datetime_obj.day
-                self.df.loc[row_idx, 'Month'] = datetime_obj.month
-                self.df.loc[row_idx, 'DayOfWeek'] = datetime_obj.weekday()
-                if datetime_obj.weekday() > 4:
-                    self.df.loc[row_idx, 'isWorkday'] = 0
-                date = datetime(datetime_obj.year, datetime_obj.month, datetime_obj.day)
-                if date in holidays:
-                    self.df.loc[row_idx, 'isHoliday'] = 1
+            self.df['isHoliday'] = datetimes.apply(lambda dt: 1 if dt in holidays else 0)
+        
         return self
         
     ###
@@ -183,12 +172,7 @@ class WUDataFrame(DataFrame):
         pass
     
     def _make_datetime_col(self):
-        self.df['Weather Datetime'] = pd.Series('', index=self.df.index)
-        UTC_to_EDT_conversion = timedelta(hours = 4) # needed to convert supplied datetimes to EDT
-        for row_idx, data_series in self.df.iterrows():
-            datetime_str = data_series['DateUTC<br />']
-            datetime_obj = datetime.strptime(datetime_str, "%Y-%m-%d %H:%M:%S<br />")
-            self.df.loc[row_idx, 'Weather Datetime'] = datetime_obj - UTC_to_EDT_conversion
+        self.df['Weather Datetime'] = pd.to_datetime('DateUTC<br/>', format="%Y-%m-%d %H:%M:%S<br />") + timedelta(hours = 4) # needed to convert supplied datetimes to EDT
         return self
             
 ### TurnstileWeatherDataFrame class:
