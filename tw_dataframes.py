@@ -71,6 +71,9 @@ class MTADataFrame(DataFrame):
         # scp = sub channel position (turnstile unit identifier)
     ###
     def _combine_scps(self):
+        # TODO: This code might be able to be written MUCH more cleanly
+        # using Pandas split-apply-combine methods
+        # group by scp... where count < 8, extrapolate
         '''
         NOTE:
         This code does not currently distinguish between different subway STATIONS
