@@ -59,8 +59,12 @@ class Driver(object):
         return self
         
         
-master_csv_maker = Driver((11,23,2014), (11,27,2015)) # defaults to Times Square
-# GO FROM 11,23,2014 to 11,27,2015. Works excellently
+csv1_maker = Driver((11,23,2014), (5,1,2015), station_name="42 ST-TIMES SQ", filename="TSQ1.csv")
+csv2_maker = Driver((5,3,2015), (11,27,2015), station_name="42 ST-TIMES SQ", filename="TSQ2.csv")
+master_df = pd.concat([csv1_maker.df, csv2_maker.df], ignore_index=True)
+master_df.to_csv('turnstile_weather.csv')
+# GO FROM 11,23,2014 to 11,27,2015. Works excellently for Times Square
+# Grand Central, however, only works after 12,6. So do 12,7
 '''
 IMPORTANT NOTE: Time Square Station Turnstile Unit 01-00-07 loses all its data on 11/21/2014 @ 15:00:00
 http://web.mta.info/developers/data/nyct/turnstile/turnstile_141122.txt
