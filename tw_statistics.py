@@ -16,6 +16,7 @@ from datetime import datetime
 class WrangledDataFrame(object):
     def __init__(self, turnstile_weather_df):
         self.df = turnstile_weather_df
+        self._make_timestamps()
         self._fill_nan_entries_exits()
         self._replace_calm_windspeeds()
         self._make_gusts_binary()
@@ -24,7 +25,12 @@ class WrangledDataFrame(object):
         self._make_neg9999s_nans()
         self._interpolation()
         
-                
+    def _make_timestamps(self):
+        self.df['Subway Datetime'] = pd.to_datetime(self.df['Subway Datetime'])
+        self.df['Weather Datetime'] = pd.to_datetime(self.df['Weather Datetime'])
+        self.df['Date'] = pd.to_datetime(self.df['Date'])
+        return self
+        
     def _fill_nan_entries_exits(self):
         cols = ['Entries Per Hour', 'Exits Per Hour']
         for col in cols:
@@ -66,6 +72,7 @@ class WrangledDataFrame(object):
         self.df.loc[:,"Wind SpeedMPH"].interpolate(inplace=True)
         return self
         
+''' Can we get rid of skies somehow? Doesn't look pretty. Also I hate the name "Analyzer"... reminds me of "Grinder" from Gears of War'''
 class Analyzer(WrangledDataFrame):
     def __init__(self, turnstile_weather_df):
         WrangledDataFrame.__init__(self, turnstile_weather_df)
@@ -148,126 +155,65 @@ class Analyzer(WrangledDataFrame):
         U, p = scipy.stats.mannwhitneyu(cond, no_cond, use_continuity=True)
         return (cond.size, cond_mean), (cond.size, no_cond_mean), U, p
         
-class Visualizer(WrangledDataFrame):
-    def __init__(self, turnstile_weather_df):
-        WrangledDataFrame.__init__(self, turnstile_weather_df)
-        self._make_timestamps()
-        self._make_time_cols()
-        self._group_by()
-        self.plot()
-        # stat2.df.groupby('Month').mean()
-        
-    def _delete_same_dayofyears(self):
-        # might not be necessary
-        # I say, instead of that, figure out how to group by DAY
-        # not DAY OF YEAR, yeah?
-        # so when you plot it, there is no hour consideration... it just averages
-        pass
-        
-    def _make_timestamps(self):
-        self.df['Subway Datetime'] = pd.to_datetime(self.df['Subway Datetime'])
-        return self
-        
-    def _make_time_cols(self):
-        self.df['DayOfYear'] = pd.Series(0, index=self.df.index)
-        self.df['WeekOfYear'] = pd.Series(0, index=self.df.index)
-        for row_idx, data_series in self.df.iterrows():
-            self.df.loc[row_idx, 'DayOfYear'] = data_series['Subway Datetime'].dayofyear
-            self.df.loc[row_idx, 'WeekOfYear'] = data_series['Subway Datetime'].weekofyear
-        return self
-            
-    def _group_by(self, col='DayOfYear'):
-        self.df = self.df.groupby(col, as_index=False).mean()
-        return self
-
-    def plot(self):
-        self.df = self.df[self.df['isWorkday']==1]
-        self.graph = ggplot(aes(x='DayOfYear', y='Entries Per Hour'), data=self.df) + geom_line(color='red')
-
-    def ezplot(self):
-        self.df.plot() # very easy way to plot with dataframes
-        
 class GradientDescent(WrangledDataFrame):
     def __init__(self, turnstile_weather_df):
         WrangledDataFrame.__init__(self, turnstile_weather_df)
-        self.df = turnstile_weather_df
-        self._make_predictions()
-
+        self.alpha = None
+        self.values = None
+        self.theta_gradient_descent = None
+        self.cost_history = None
+        self.predictions = None
         
     def _normalize_features(self, features_df):
         normalized_features_df = (features_df - features_df.mean()) / features_df.std() # normalization
         return normalized_features_df
     
-    def _compute_cost(self, features, values, theta):
-        actual_values = values
+    def _compute_cost(self, features, actual_values, theta):
         predicted_values = np.dot(features, theta)
-        num_values = len(values)
+        num_values = len(actual_values)
 
         cost = np.square(actual_values - predicted_values).sum() / (2*num_values)
-        
-        return cost
+        return predicted_values, cost
     
-    def _apply_gradient_descent(self, features, values, theta, alpha, num_iterations):
-        actual_values = values
+    def _apply_gradient_descent(self, features, actual_values, theta, alpha, num_iterations):
         num_values = len(values)
         cost_history = []
+        predicted_values = np.dot(features, theta) # initialize
         
         for i in range(num_iterations):
-            predicted_values = np.dot(features, theta)
-            
             # update thetas
             theta = theta + alpha/(2*num_values)*np.dot(actual_values - predicted_values, features)
             
-            cost_history.append(self._compute_cost(features, values, theta))
+            # predict new values, compute cost
+            predicted_values, cost = self._compute_cost(features, values, theta)
+            # append cost to history
+            cost_history.append(cost)
                     
         return theta, pd.Series(cost_history)
+           
+    def make_predictions(self, col_name='Entries Per Hour', alpha=0.1, num_iterations=75):
+        self.alpha = alpha 
         
-    def _plot_cost_history(self, alpha, cost_history):
-        # Stupidly enough, the name of the X or Y cannot exceed 4 characters...
-        iteration = range(len(cost_history))
-        cost_df = pd.DataFrame({'Cost': cost_history, 'Iter': iteration})
-        plot = ggplot(aes(x='Iter', y='Cost'), data=cost_df) + geom_point() + geom_line() + ggtitle('Cost History for alpha = %.3f' % alpha )
-        self.cost_history_plot = plot
-        return self
+        ''' Which column we want to predict '''
+        self.values = self.df[col_name]
         
-    def _plot_residuals(self, data, predictions):
-        plt.figure()
-        differences = data - predictions
-        differences.hist(bins=range(-1000, 1500, 100))
-        self.residual_plot = plt
-        return self
-        
-    def _calculate_r_squared(self, data, predictions):
-        r_squared = 1 - (np.square(data - predictions).sum())/(np.square(data - np.mean(data)).sum())
-        self.r_squared = r_squared
-        return self
-    
-        
-    def _make_predictions(self):
-        ###
+        ''' All the features that can be included in predicting the above '''
         datetime_fts = self.df[['Hour', 'Day', 'Month', 'DayOfWeek', 'isWorkday', 'isHoliday']]
         dummy_subway_stations = pd.get_dummies(self.df['Station'])
         major_weather_fts = self.df[['TemperatureF', 'Dew PointF', 'Humidity', 'Sea Level PressureIn']]
         minor_weather_fts = self.df[['VisibilityMPH', 'Gusts', 'PrecipitationIn', 'WindDirDegrees']]
         dummy_conditions = pd.get_dummies(self.df['Conditions']) # events naturally included in this df 
-        ###
         
-        # which of the above features to include in predictive analysis
-        features =  datetime_fts.join([major_weather_fts, minor_weather_fts, dummy_conditions])
+        ''' Which features are going to be included in predicting the above'''
+        features =  datetime_fts.join([major_weather_fts, minor_weather_fts, dummy_conditions]) # change this, as fitting
+        if col_name in features.columns: # do not include column itself in predicting column values
+            features = features.drop([col_name], 1)
         features = self._normalize_features(features)
-        
-        # what we are attempting to predict
-        values = self.df['Entries Per Hour']
-        
-        # necessary column of 1s (y-intercept)
         features['ones'] = np.ones(len(values))
-
-        features_array = np.array(features)
-        values_array = np.array(values)
         
         ''' Application of Gradient Descent '''
-        alpha = .1
-        num_iterations = 75
+        features_array = np.array(features)
+        values_array = np.array(self.values)
         theta_gradient_descent = np.zeros(len(features.columns))
         theta_gradient_descent, cost_history = self._apply_gradient_descent(features_array, 
                                                                      values_array, 
@@ -275,21 +221,56 @@ class GradientDescent(WrangledDataFrame):
                                                                      alpha, 
                                                                      num_iterations) 
                                                                 
-        ''' Predictions '''   
-        self.predictions = np.dot(features_array, theta_gradient_descent)
-        
-        ''' Cost History Plot '''
-        self._plot_cost_history(alpha, cost_history)
-        
-        ''' Residual Plot '''
-        self._plot_residuals(values, self.predictions)
-        
-        ''' R-Squared Value '''
-        self._calculate_r_squared(values, self.predictions)
-        
+        ''' Results '''
+        self.theta_gradient_descent = theta_gradient_descent
+        self.cost_history = cost_history
+        self.predictions = np.dot(features_array, theta_gradient_descent)  
         return self
         
-
+    def plot_cost_history(self):
+        if self.alpha == None:
+            print "Make predictions first."
+            return
+        iteration = range(len(self.cost_history))
+        cost_df = pd.DataFrame({'Cost': self.cost_history, 'Iteration': iteration})
+        plot = ggplot(aes(x='Iteration', y='Cost'), data=cost_df) + geom_point() + geom_line() + ggtitle('Cost History for alpha = %.3f' % self.alpha )
+        return plot
         
+    def plot_residuals(self):
+        if self.alpha == None:
+            print "Make predictions first."
+            return        
+        plt.figure()
+        differences = self.values - self.predictions
+        differences.hist(bins=range(-1000, 1500, 100))
+        return plt
+        
+    def calculate_r_squared(self):
+        if self.alpha == None:
+            print "Make predictions first."
+            return        
+        r_squared = 1 - (np.square(self.values - self.predictions).sum())/(np.square(self.values - np.mean(self.values)).sum())
+        return r_squared
+        
+''' Needs more cleaning. Where should group by go? Should this merge in with Analyzer? How can we clean up the plotting?
+Definitely should NOT inherit from Gradient Descent, since we could use other algorithm later on.
+Rather, should have function that takes in predictions from those calculations, and plot them appropriately '''
+class Visualizer(GradientDescent):
+    def __init__(self, turnstile_weather_df):
+        GradientDescent.__init__(self, turnstile_weather_df)
+        self._group_by()
+        self.plot()
+        # stat2.df.groupby('Month').mean()
+            
+    def _group_by(self, col='Date'):
+        self.df = self.df.groupby(col, as_index=False).mean()
+        return self
+
+    def plot(self):
+        self.df = self.df[self.df['isWorkday']==1]
+        self.graph = ggplot(aes(x='Date', y='Entries Per Hour'), data=self.df) + geom_line(color='red')
+
+    def ezplot(self):
+        self.df[['Entries Per Hour', 'Predictions: Entries Per Hour']].plot()
         
         
