@@ -43,14 +43,16 @@ class MTADataFrame(DataFrame):
 
         if add_more_cols:
             self.df['Date'] = datetimes.apply(lambda dt: dt.date())
+            print type(self.df.loc[0, 'Date'])
+            print type(datetimes[0])
             self.df['Month'] = datetimes.apply(lambda dt: dt.month)
             self.df['Hour'] = datetimes.apply(lambda dt: dt.hour)
             self.df['DayOfWeek'] = datetimes.apply(lambda dt: dt.dayofweek)
             self.df['isWorkday'] = self.df['DayOfWeek'].apply(lambda weekday: 1 if weekday<5 else 0)
             
             calendar = USFederalHolidayCalendar()
-            holidays = calendar.holidays(start='2014-11-19', end='2015-12-31').to_pydatetime() # CHANGE HOLIDAY RANGE HERE
-            self.df['isHoliday'] = datetimes.apply(lambda dt: 1 if dt in holidays else 0)
+            holidays = calendar.holidays(start='2014-11-19', end='2015-12-31')
+            self.df['isHoliday'] = self.df['Date'].apply(lambda date: 1 if date in holidays else 0)
         
         return self
         
@@ -279,7 +281,6 @@ class TurnstileWeatherDataFrame(DataFrame): # TAKES IN PANDAS DATAFRAMES!
 class CleanedTWDataFrame(TurnstileWeatherDataFrame):
     def __init__(self, MTA_dataframe, WU_dataframe):
         TurnstileWeatherDataFrame.__init__(self, MTA_dataframe, WU_dataframe)
-        print self.df
         # self._delete_unneeded_cols()
         self._rearrange()
     
