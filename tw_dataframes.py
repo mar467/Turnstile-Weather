@@ -292,8 +292,6 @@ class CleanedTWDataFrame(TurnstileWeatherDataFrame):
         return self
 
     def _rearrange(self):
-        cols = self.df.columns.tolist()
-        cols.insert(0, cols.pop(cols.index('Weather Datetime')))
-        cols.insert(0, cols.pop(cols.index('Subway Datetime')))
+        cols = ['Subway Datetime', 'Weather Datetime', 'Station', 'Entries', 'Exits', 'Entries Per Hour', 'Exits Per Hour', 'Date', 'Month', 'Hour', 'DayOfWeek', 'isWorkday', 'isHoliday', 'TemperatureF', 'Dew PointF', 'Humidity', 'Sea Level PressureIn', 'Wind SpeedMPH', 'Gust SpeedMPH', 'Wind Direction', 'WindDirDegrees', 'VisibilityMPH', 'PrecipitationIn', 'Events', 'Conditions']
         self.df = self.df.reindex(columns = cols)
         return self
