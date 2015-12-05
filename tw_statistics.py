@@ -95,6 +95,7 @@ class WrangledDataFrame(object):
                 self.df.loc[row_idx, 'isHoliday'] = val_to_assign
         
         return self
+        
 
 class TailoredDataFrame(WrangledDataFrame):
     def __init__(self, turnstile_weather_df):
@@ -268,14 +269,20 @@ class GradientDescentPredictor(WrangledDataFrame):
         self.values = self.df[col_name]
         
         ''' All the features that can be included in predicting the above '''
-        datetime_fts = self.df[['Hour', 'Month', 'DayOfWeek', 'isWorkday', 'isHoliday']]
+        dummy_hours = pd.get_dummies(self.df['Hour'], prefix='hour: ')
+        dummy_months = pd.get_dummies(self.df['Month'], prefix='month: ')
+        dummy_daysofweek = pd.get_dummies(self.df['DayOfWeek'], prefix='weekday: ')
+        datetime_fts = self.df[['isWorkday', 'isHoliday']]
+        datetime_fts = datetime_fts.join([dummy_hours, dummy_months, dummy_daysofweek])
+        # datetime_fts = self.df[['Hour', 'Month', 'DayOfWeek', 'isWorkday', 'isHoliday']]
         dummy_subway_stations = pd.get_dummies(self.df['Station'])
         major_weather_fts = self.df[['TemperatureF', 'Dew PointF', 'Humidity', 'Sea Level PressureIn']]
         minor_weather_fts = self.df[['VisibilityMPH', 'Gusts', 'PrecipitationIn', 'WindDirDegrees']]
-        dummy_conditions = pd.get_dummies(self.df['Events']) # events naturally included in this df 
+        dummy_conditions = pd.get_dummies(self.df['Conditions'], prefix='condition: ') # events naturally included in this df 
+        dummy_events = pd.get_dummies(self.df['Events'], prefix='event: ')        
         
-        ''' Which features are going to be included in predicting the above'''
-        features =  datetime_fts.join([major_weather_fts, minor_weather_fts, dummy_conditions]) # change this, as fitting
+        ''' Which features are going to be included in predicting the above'''             
+        features =  datetime_fts.join([major_weather_fts, minor_weather_fts, dummy_conditions, dummy_events]) # change this, as fitting
         if col_name in features.columns: # do not include column itself in predicting column values
             features = features.drop([col_name], 1)
         features = self._normalize_features(features)
