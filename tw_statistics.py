@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import scipy
 import scipy.stats
 from ggplot import *
-from datetime import datetime
+from datetime import datetime, timedelta
 
 class WrangledDataFrame(object):
     def __init__(self, turnstile_weather_df):
@@ -24,6 +24,7 @@ class WrangledDataFrame(object):
         self._fill_nan_events()
         self._make_neg9999s_nans()
         self._interpolation()
+        self._near_holidays()
         
     def _make_timestamps(self):
         self.df['Subway Datetime'] = pd.to_datetime(self.df['Subway Datetime'])
@@ -72,10 +73,66 @@ class WrangledDataFrame(object):
         self.df.loc[:,"Wind SpeedMPH"].interpolate(inplace=True)
         return self
         
-''' Can we get rid of skies somehow? Doesn't look pretty. Also I hate the name "Analyzer"... reminds me of "Grinder" from Gears of War'''
-class Analyzer(WrangledDataFrame):
+    def _near_holidays(self, val_to_assign=1):
+        # assigns holiday value to black friday, christmas eve,
+        # day after christmas, new year's eve, and day after new year's        
+        
+        black_fri_date = None
+        for row_idx, data_series in self.df.iterrows():
+            date = data_series['Date']
+            dayofyear = date.dayofyear
+            if dayofyear > 326:
+                if date.month == 11:
+                    if data_series['isHoliday']==1: # is thanksgiving
+                        black_fri_date = date + timedelta(days=1)
+                    elif date == black_fri_date:
+                        self.df.loc[row_idx, 'isHoliday'] = val_to_assign
+                else: # date.month == 12
+                    day = date.day
+                    if day == 24 or day == 26 or day == 31:
+                        self.df.loc[row_idx, 'isHoliday'] = val_to_assign
+            elif dayofyear == 2:
+                self.df.loc[row_idx, 'isHoliday'] = val_to_assign
+        
+        return self
+
+class TailoredDataFrame(WrangledDataFrame):
     def __init__(self, turnstile_weather_df):
         WrangledDataFrame.__init__(self, turnstile_weather_df)
+        self._original = self.df
+        self._grouped = False
+        
+    def include_predictions(self, RegressionAlgorithmObject):
+        if self._grouped:
+            print "Ungroup dataframe first by returning to original."
+            return
+        predictions = np.asarray(RegressionAlgorithmObject.predictions, np.float64)
+        self.df['Predictions'] = pd.Series(predictions, index=self.df.index)      
+        print type(self.df.loc[0,'Predictions'])        
+        return self
+        
+    def group_by(self, col='Date'):
+        self.df = self.df.groupby(col, as_index=False).mean()
+        self._grouped = True
+        return self
+        
+    def only_workdays(self):
+        self.df = self.df[self.df['isWorkday']==1]
+        return self
+        
+    def no_holidays(self):
+        self.df = self.df[self.df['isHoliday']==0]
+        return self
+    
+    def return_to_original(self):
+        self.df = self._original
+        self._grouped = False
+        return self
+
+
+class Explorer(TailoredDataFrame):
+    def __init__(self, turnstile_weather_df):
+        TailoredDataFrame.__init__(self, turnstile_weather_df)
         
     def _condition(self, selection, skies):
         ''' 
@@ -99,16 +156,16 @@ class Analyzer(WrangledDataFrame):
             without_cond = self.df["VisibilityMPH"]<10
 
         elif selection == 'gusts':
-            with_cond = self.df["Gust SpeedMPH"]=='-' # FIX AFTER WRANGLED
-            without_cond = self.df["Gust SpeedMPH"]!='-' # FIX AFTER WRANGLED
+            with_cond = self.df["Gust SpeedMPH"]==1
+            without_cond = self.df["Gust SpeedMPH"]!=0
             
         elif selection == 'wind direction':
             with_cond = self.df["WindDirDegrees"]==0
             without_cond = self.df["WindDirDegrees"]!=0
       
         elif selection == 'precipitation':
-            with_cond = self.df["PrecipitationIn"]>0.01
-            without_cond = self.df[np.isnan(self.df["PrecipitationIn"])] # FIX AFTER WRANGLED
+            with_cond = self.df["PrecipitationIn"]>0
+            without_cond = self.df["PrecipitationIn"]==0
             
         elif selection == 'temperature':
             mean = np.mean(self.df["TemperatureF"])
@@ -131,9 +188,8 @@ class Analyzer(WrangledDataFrame):
             without_cond = self.df["Events"]!='Rain'
             
         return with_cond, without_cond
-            
         
-    def entries_histogram(self, selection='rain', skies='Clear', opposite=False):
+    def plot_entries_histogram(self, selection='rain', skies='Clear', opposite=False):
         if opposite:
             without_cond, with_cond = self._condition(selection, skies)
         else:
@@ -154,8 +210,22 @@ class Analyzer(WrangledDataFrame):
         
         U, p = scipy.stats.mannwhitneyu(cond, no_cond, use_continuity=True)
         return (cond.size, cond_mean), (cond.size, no_cond_mean), U, p
-        
-class GradientDescent(WrangledDataFrame):
+    
+    
+class Visualizer(TailoredDataFrame):
+    def __init__(self, turnstile_weather_df):
+        TailoredDataFrame.__init__(self, turnstile_weather_df)
+
+    def plot(self, x_col_name='Date', y_col_name='Entries Per Hour'):
+        plot = ggplot(aes(x=x_col_name, y=y_col_name), data=self.df) + geom_line(color='red')
+        return plot
+
+    def comparison_plot(self, first_col_name='Entries Per Hour', second_col_name='Predictions'):
+        plot = self.df[[first_col_name, second_col_name]].plot()
+        return plot
+   
+     
+class GradientDescentPredictor(WrangledDataFrame):
     def __init__(self, turnstile_weather_df):
         WrangledDataFrame.__init__(self, turnstile_weather_df)
         self.alpha = None
@@ -202,7 +272,7 @@ class GradientDescent(WrangledDataFrame):
         dummy_subway_stations = pd.get_dummies(self.df['Station'])
         major_weather_fts = self.df[['TemperatureF', 'Dew PointF', 'Humidity', 'Sea Level PressureIn']]
         minor_weather_fts = self.df[['VisibilityMPH', 'Gusts', 'PrecipitationIn', 'WindDirDegrees']]
-        dummy_conditions = pd.get_dummies(self.df['Conditions']) # events naturally included in this df 
+        dummy_conditions = pd.get_dummies(self.df['Events']) # events naturally included in this df 
         
         ''' Which features are going to be included in predicting the above'''
         features =  datetime_fts.join([major_weather_fts, minor_weather_fts, dummy_conditions]) # change this, as fitting
@@ -251,26 +321,3 @@ class GradientDescent(WrangledDataFrame):
             return        
         r_squared = 1 - (np.square(self.values - self.predictions).sum())/(np.square(self.values - np.mean(self.values)).sum())
         return r_squared
-        
-''' Needs more cleaning. Where should group by go? Should this merge in with Analyzer? How can we clean up the plotting?
-Definitely should NOT inherit from Gradient Descent, since we could use other algorithm later on.
-Rather, should have function that takes in predictions from those calculations, and plot them appropriately '''
-class Visualizer(GradientDescent):
-    def __init__(self, turnstile_weather_df):
-        GradientDescent.__init__(self, turnstile_weather_df)
-        self._group_by()
-        self.plot()
-        # stat2.df.groupby('Month').mean()
-            
-    def _group_by(self, col='Date'):
-        self.df = self.df.groupby(col, as_index=False).mean()
-        return self
-
-    def plot(self):
-        self.df = self.df[self.df['isWorkday']==1]
-        self.graph = ggplot(aes(x='Date', y='Entries Per Hour'), data=self.df) + geom_line(color='red')
-
-    def ezplot(self):
-        self.df[['Entries Per Hour', 'Predictions: Entries Per Hour']].plot()
-        
-        
