@@ -108,8 +108,7 @@ class TailoredDataFrame(WrangledDataFrame):
             print "Ungroup dataframe first by returning to original."
             return
         predictions = np.asarray(predictions, np.float64)
-        self.df['Predictions'] = pd.Series(predictions, index=self.df.index)      
-        print type(self.df.loc[0,'Predictions'])        
+        self.df['Predictions'] = pd.Series(predictions, index=self.df.index)             
         return self
         
     def group_by(self, col='Date'):
@@ -229,6 +228,7 @@ class Visualizer(TailoredDataFrame):
 class GradientDescentPredictor(WrangledDataFrame):
     def __init__(self, turnstile_weather_df):
         WrangledDataFrame.__init__(self, turnstile_weather_df)
+        self.col_name = None
         self.alpha = None
         self.values = None
         self.thetas = None
@@ -284,6 +284,7 @@ class GradientDescentPredictor(WrangledDataFrame):
         return features
            
     def make_predictions(self, col_name='Entries Per Hour', alpha=0.1, num_iterations=75):
+        self.col_name = col_name
         self.alpha = alpha 
         
         ''' Which column we want to predict '''
@@ -310,20 +311,21 @@ class GradientDescentPredictor(WrangledDataFrame):
         self.predictions = np.dot(features_array, theta_gradient_descent)  
         return self
         
-    def make_predictions_with_thetas(self, thetas, other_features, col_name='Entries Per Hour'):
-        # for the purposes of later plotting        
+    def make_predictions_with_thetas(self, PredictorObject):  
+        # for the purposes of later plotting
+        col_name = PredictorObject.col_name        
         self.values = self.df[col_name]
         
         # making features
         self.features = self.create_features_df()
         
         # reindexing features to match thetas obtained from other gradient descent object
-        other_columns = other_features.columns
+        other_columns = PredictorObject.features.columns 
         self.features = self.features.reindex(columns=other_columns)
         self.features = self.features.fillna(0)
         
         features_array = np.array(self.features)
-        self.predictions = np.dot(features_array, thetas)
+        self.predictions = np.dot(features_array, PredictorObject.thetas)
         return self
             
     def plot_cost_history(self):
