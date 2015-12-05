@@ -168,21 +168,21 @@ class GradientDescent(WrangledDataFrame):
         normalized_features_df = (features_df - features_df.mean()) / features_df.std() # normalization
         return normalized_features_df
     
-    def _compute_cost(self, features, actual_values, theta):
+    def _compute_cost(self, features, values, theta):
         predicted_values = np.dot(features, theta)
-        num_values = len(actual_values)
+        num_values = len(values)
 
-        cost = np.square(actual_values - predicted_values).sum() / (2*num_values)
+        cost = np.square(values - predicted_values).sum() / (2*num_values)
         return predicted_values, cost
     
-    def _apply_gradient_descent(self, features, actual_values, theta, alpha, num_iterations):
+    def _apply_gradient_descent(self, features, values, theta, alpha, num_iterations):
         num_values = len(values)
         cost_history = []
         predicted_values = np.dot(features, theta) # initialize
         
         for i in range(num_iterations):
             # update thetas
-            theta = theta + alpha/(2*num_values)*np.dot(actual_values - predicted_values, features)
+            theta = theta + alpha/(2*num_values)*np.dot(values - predicted_values, features)
             
             # predict new values, compute cost
             predicted_values, cost = self._compute_cost(features, values, theta)
@@ -198,7 +198,7 @@ class GradientDescent(WrangledDataFrame):
         self.values = self.df[col_name]
         
         ''' All the features that can be included in predicting the above '''
-        datetime_fts = self.df[['Hour', 'Day', 'Month', 'DayOfWeek', 'isWorkday', 'isHoliday']]
+        datetime_fts = self.df[['Hour', 'Month', 'DayOfWeek', 'isWorkday', 'isHoliday']]
         dummy_subway_stations = pd.get_dummies(self.df['Station'])
         major_weather_fts = self.df[['TemperatureF', 'Dew PointF', 'Humidity', 'Sea Level PressureIn']]
         minor_weather_fts = self.df[['VisibilityMPH', 'Gusts', 'PrecipitationIn', 'WindDirDegrees']]
@@ -209,7 +209,7 @@ class GradientDescent(WrangledDataFrame):
         if col_name in features.columns: # do not include column itself in predicting column values
             features = features.drop([col_name], 1)
         features = self._normalize_features(features)
-        features['ones'] = np.ones(len(values))
+        features['ones'] = np.ones(len(self.values))
         
         ''' Application of Gradient Descent '''
         features_array = np.array(features)
