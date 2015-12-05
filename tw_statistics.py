@@ -103,11 +103,11 @@ class TailoredDataFrame(WrangledDataFrame):
         self._original = self.df
         self._grouped = False
         
-    def include_predictions(self, RegressionAlgorithmObject):
+    def include_predictions(self, predictions):
         if self._grouped:
             print "Ungroup dataframe first by returning to original."
             return
-        predictions = np.asarray(RegressionAlgorithmObject.predictions, np.float64)
+        predictions = np.asarray(predictions, np.float64)
         self.df['Predictions'] = pd.Series(predictions, index=self.df.index)      
         print type(self.df.loc[0,'Predictions'])        
         return self
@@ -231,7 +231,7 @@ class GradientDescentPredictor(WrangledDataFrame):
         WrangledDataFrame.__init__(self, turnstile_weather_df)
         self.alpha = None
         self.values = None
-        self.theta_gradient_descent = None
+        self.thetas = None
         self.cost_history = None
         self.predictions = None
         
@@ -261,14 +261,9 @@ class GradientDescentPredictor(WrangledDataFrame):
             cost_history.append(cost)
                     
         return theta, pd.Series(cost_history)
-           
-    def make_predictions(self, col_name='Entries Per Hour', alpha=0.1, num_iterations=75):
-        self.alpha = alpha 
         
-        ''' Which column we want to predict '''
-        self.values = self.df[col_name]
-        
-        ''' All the features that can be included in predicting the above '''
+    def create_features_df(self):
+        ''' All the features that can be included in predicting '''
         dummy_hours = pd.get_dummies(self.df['Hour'], prefix='hour: ')
         dummy_months = pd.get_dummies(self.df['Month'], prefix='month: ')
         dummy_daysofweek = pd.get_dummies(self.df['DayOfWeek'], prefix='weekday: ')
@@ -281,17 +276,28 @@ class GradientDescentPredictor(WrangledDataFrame):
         dummy_conditions = pd.get_dummies(self.df['Conditions'], prefix='condition: ') # events naturally included in this df 
         dummy_events = pd.get_dummies(self.df['Events'], prefix='event: ')        
         
-        ''' Which features are going to be included in predicting the above'''             
+        ''' Which features are going to be included in predicting '''             
         features =  datetime_fts.join([major_weather_fts, minor_weather_fts, dummy_conditions, dummy_events]) # change this, as fitting
-        if col_name in features.columns: # do not include column itself in predicting column values
-            features = features.drop([col_name], 1)
         features = self._normalize_features(features)
-        features['ones'] = np.ones(len(self.values))
+        features['ones'] = np.ones(len(dummy_hours)) # y-intercept
+        
+        return features
+           
+    def make_predictions(self, col_name='Entries Per Hour', alpha=0.1, num_iterations=75):
+        self.alpha = alpha 
+        
+        ''' Which column we want to predict '''
+        self.values = self.df[col_name]
+        values_array = np.array(self.values)
+
+        ''' Features to include '''
+        self.features = self.create_features_df()
+        if col_name in self.features.columns: # do not include column itself in predicting column values
+            self.features = features.drop([col_name], 1)
+        features_array = np.array(self.features)
         
         ''' Application of Gradient Descent '''
-        features_array = np.array(features)
-        values_array = np.array(self.values)
-        theta_gradient_descent = np.zeros(len(features.columns))
+        theta_gradient_descent = np.zeros(len(self.features.columns))
         theta_gradient_descent, cost_history = self._apply_gradient_descent(features_array, 
                                                                      values_array, 
                                                                      theta_gradient_descent, 
@@ -299,14 +305,30 @@ class GradientDescentPredictor(WrangledDataFrame):
                                                                      num_iterations) 
                                                                 
         ''' Results '''
-        self.theta_gradient_descent = theta_gradient_descent
+        self.thetas = theta_gradient_descent
         self.cost_history = cost_history
         self.predictions = np.dot(features_array, theta_gradient_descent)  
         return self
         
+    def make_predictions_with_thetas(self, thetas, other_features, col_name='Entries Per Hour'):
+        # for the purposes of later plotting        
+        self.values = self.df[col_name]
+        
+        # making features
+        self.features = self.create_features_df()
+        
+        # reindexing features to match thetas obtained from other gradient descent object
+        other_columns = other_features.columns
+        self.features = self.features.reindex(columns=other_columns)
+        self.features = self.features.fillna(0)
+        
+        features_array = np.array(self.features)
+        self.predictions = np.dot(features_array, thetas)
+        return self
+            
     def plot_cost_history(self):
-        if self.alpha == None:
-            print "Make predictions first."
+        if self.cost_history == None:
+            print "Run make_predictions() first."
             return
         iteration = range(len(self.cost_history))
         cost_df = pd.DataFrame({'Cost': self.cost_history, 'Iteration': iteration})
@@ -314,7 +336,7 @@ class GradientDescentPredictor(WrangledDataFrame):
         return plot
         
     def plot_residuals(self):
-        if self.alpha == None:
+        if self.predictions == None:
             print "Make predictions first."
             return        
         plt.figure()
@@ -323,7 +345,7 @@ class GradientDescentPredictor(WrangledDataFrame):
         return plt
         
     def calculate_r_squared(self):
-        if self.alpha == None:
+        if self.predictions == None:
             print "Make predictions first."
             return        
         r_squared = 1 - (np.square(self.values - self.predictions).sum())/(np.square(self.values - np.mean(self.values)).sum())
