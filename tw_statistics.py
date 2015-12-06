@@ -209,7 +209,7 @@ class Explorer(TailoredDataFrame):
         no_cond_mean = np.mean(no_cond)
         
         U, p = scipy.stats.mannwhitneyu(cond, no_cond, use_continuity=True)
-        return (cond.size, cond_mean), (cond.size, no_cond_mean), U, p
+        return (cond.size, cond_mean), (no_cond.size, no_cond_mean), U, p
     
     
 class Visualizer(TailoredDataFrame):
