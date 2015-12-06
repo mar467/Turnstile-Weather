@@ -147,17 +147,30 @@ class Explorer(TailoredDataFrame):
             with_cond = self.df["Events"]=='Rain'
             without_cond = self.df["Events"]!='Rain'
             
+        elif selection == 'snow':
+            with_cond = self.df["Events"]=='Snow'
+            without_cond = self.df["Events"]!='Snow'
+            
         elif selection == 'skies': # needs to catch potential errors with skies
             with_cond = self.df["Conditions"]==skies
             without_cond = self.df["Conditions"]!=skies
             
+        elif selection == 'extreme weather':
+            with_cond = self.df["Conditions"].isin(['Haze', 'Snow', 'Heavy Snow', 'Heavy Rain'])
+            without_cond = with_cond==False
+            
         elif selection == 'visibility':
             with_cond = self.df["VisibilityMPH"]==10
             without_cond = self.df["VisibilityMPH"]<10
+            
+        elif selection == 'wind speed':
+            mean = np.mean(self.df["Wind SpeedMPH"])
+            with_cond = self.df["Wind SpeedMPH"]>mean
+            without_cond = self.df["Wind SpeedMPH"]<mean
 
         elif selection == 'gusts':
-            with_cond = self.df["Gust SpeedMPH"]==1
-            without_cond = self.df["Gust SpeedMPH"]!=0
+            with_cond = self.df["Gusts"]==1
+            without_cond = self.df["Gusts"]==0
             
         elif selection == 'wind direction':
             with_cond = self.df["WindDirDegrees"]==0
@@ -181,6 +194,10 @@ class Explorer(TailoredDataFrame):
             mean = np.mean(self.df["Sea Level PressureIn"])
             with_cond = self.df["Sea Level PressureIn"]>mean
             without_cond = self.df["Sea Level PressureIn"]<mean
+            
+        elif selection == 'summer vs. winter':
+            with_cond = self.df["Month"].isin([6,7,8])
+            without_cond = self.df["Month"].isin([12,1,2])
             
         else:
             print 'Not a valid selection.'
