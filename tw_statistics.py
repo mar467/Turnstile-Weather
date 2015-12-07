@@ -177,13 +177,17 @@ class Explorer(TailoredDataFrame):
             without_cond = self.df["WindDirDegrees"]!=0
       
         elif selection == 'precipitation':
-            with_cond = self.df["PrecipitationIn"]>0
+            with_cond = self.df["PrecipitationIn"]>0.08
             without_cond = self.df["PrecipitationIn"]==0
             
         elif selection == 'temperature':
             mean = np.mean(self.df["TemperatureF"])
             with_cond = self.df["TemperatureF"]>mean
             without_cond = self.df["TemperatureF"]<mean
+            
+        elif selection == 'below freezing':
+            with_cond = self.df["TemperatureF"]<=32
+            without_cond = self.df["TemperatureF"]>=70
             
         elif selection == 'humidity':
             mean = np.mean(self.df["Humidity"])
@@ -281,11 +285,14 @@ class GradientDescentPredictor(WrangledDataFrame):
         
     def create_features_df(self):
         ''' All the features that can be included in predicting '''
-        dummy_hours = pd.get_dummies(self.df['Hour'], prefix='hour: ')
+        fts = self.df[[]]
+        dummy_weekend_hours = pd.get_dummies(self.df[self.df['isWorkday']==0]['Hour'], prefix='weekend hour: ')
+        dummy_weekday_hours = pd.get_dummies(self.df[self.df['isWorkday']==1]['Hour'], prefix='weekday hour: ')
+        # dummy_hours = pd.get_dummies(self.df['Hour'], prefix='hour: ')
         dummy_months = pd.get_dummies(self.df['Month'], prefix='month: ')
-        dummy_daysofweek = pd.get_dummies(self.df['DayOfWeek'], prefix='weekday: ')
-        datetime_fts = self.df[['isWorkday', 'isHoliday']]
-        datetime_fts = datetime_fts.join([dummy_hours, dummy_months, dummy_daysofweek])
+        dummy_daysofweek = pd.get_dummies(self.df['DayOfWeek'], prefix='weekday: ')       
+        datetime_fts = self.df[['Hour', 'isWorkday', 'isHoliday']]
+        datetime_fts = datetime_fts.join([dummy_weekend_hours, dummy_weekday_hours, dummy_months, dummy_daysofweek])
         # datetime_fts = self.df[['Hour', 'Month', 'DayOfWeek', 'isWorkday', 'isHoliday']]
         dummy_subway_stations = pd.get_dummies(self.df['Station'])
         major_weather_fts = self.df[['TemperatureF', 'Dew PointF', 'Humidity', 'Sea Level PressureIn']]
@@ -294,9 +301,11 @@ class GradientDescentPredictor(WrangledDataFrame):
         dummy_events = pd.get_dummies(self.df['Events'], prefix='event: ')        
         
         ''' Which features are going to be included in predicting '''             
-        features =  datetime_fts.join([major_weather_fts, minor_weather_fts, dummy_conditions, dummy_events]) # change this, as fitting
+        features =  fts.join([datetime_fts, major_weather_fts, minor_weather_fts, dummy_conditions, dummy_events]) # change this, as fitting
+        features = features.fillna(0) # for dummy weekend/weekday hours        
+        features.to_csv('curious.csv')   # DELETE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         features = self._normalize_features(features)
-        features['ones'] = np.ones(len(dummy_hours)) # y-intercept
+        features['ones'] = np.ones(len(dummy_months)) # y-intercept
         
         return features
            
@@ -325,7 +334,8 @@ class GradientDescentPredictor(WrangledDataFrame):
         ''' Results '''
         self.thetas = theta_gradient_descent
         self.cost_history = cost_history
-        self.predictions = np.dot(features_array, theta_gradient_descent)  
+        self.predictions = np.dot(features_array, theta_gradient_descent)
+        self.predictions[self.predictions<0]=0 # making it so there are no negative values
         return self
         
     def make_predictions_with_thetas(self, PredictorObject):  
