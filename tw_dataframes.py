@@ -208,7 +208,7 @@ class TurnstileWeatherDataFrame(DataFrame): # TAKES IN PANDAS DATAFRAMES!
         prev_diff = datetime.max - datetime.min
         
         for row_idx, data_series in WU_df.iterrows():
-            new_diff = abs(datetime_obj - timedelta(hours=4) - data_series['Weather Datetime'])
+            new_diff = abs(datetime_obj - data_series['Weather Datetime'])
             if prev_diff < new_diff: # if local minima has just been passed
                 return row_idx-1 # return index location of minima
             prev_diff = new_diff # else, continue
