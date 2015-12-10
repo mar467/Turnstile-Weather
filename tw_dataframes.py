@@ -26,7 +26,7 @@ class MTADataFrame(DataFrame):
         self._clean_up()
         
         self._make_datetime_col()
-        self._combine_scps()
+        self._combine_scps_all_stations()
         self._make_hourly_entries_col()
         self._make_hourly_exits_col()
         
@@ -59,7 +59,7 @@ class MTADataFrame(DataFrame):
         # This makes subsequent statistical analysis easier
         # scp = sub channel position (turnstile unit identifier)
     ###
-    def _combine_scps(self):
+    def _combine_scps(self, station_df):
         # TODO: This code might be able to be written more cleanly
         # using Pandas split-apply-combine methods
         # group by scp... where count < 8, extrapolate
@@ -75,7 +75,7 @@ class MTADataFrame(DataFrame):
                 if data_series['Scp'] != first_scp:
                     return row_idx - 1
         
-        old_df = self.df
+        old_df = station_df
         
         scp_arr = old_df['Scp'].unique().tolist()
         
@@ -119,7 +119,18 @@ class MTADataFrame(DataFrame):
             new_df.loc[row_idx, 'Entries'] = np.sum(all_scps_for_date_df['Entries']) + additional_entries
             new_df.loc[row_idx, 'Exits'] = np.sum(all_scps_for_date_df['Exits']) + additional_exits
 
-        self.df = new_df        
+        return new_df 
+        
+    def _combine_scps_all_stations(self):
+        stations = self.df['Station'].unique().tolist()
+        new_df_list = []
+        for station in stations:
+            station_df = self.df[self.df['Station']==station]
+            new_df = self._combine_scps(station_df)
+            new_df_list.append(new_df)
+            
+        self.df = pd.concat(new_df_list)
+        return self
     
     def _make_hourly_entries_col(self):
         hourly_entries = pd.Series(0, index=self.df.index)
