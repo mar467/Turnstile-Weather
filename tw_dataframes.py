@@ -43,8 +43,6 @@ class MTADataFrame(DataFrame):
 
         if add_more_cols:
             self.df['Date'] = datetimes.apply(lambda dt: dt.date())
-            print type(self.df.loc[0, 'Date'])
-            print type(datetimes[0])
             self.df['Month'] = datetimes.apply(lambda dt: dt.month)
             self.df['Hour'] = datetimes.apply(lambda dt: dt.hour)
             self.df['DayOfWeek'] = datetimes.apply(lambda dt: dt.dayofweek)
@@ -62,7 +60,7 @@ class MTADataFrame(DataFrame):
         # scp = sub channel position (turnstile unit identifier)
     ###
     def _combine_scps(self):
-        # TODO: This code might be able to be written MUCH more cleanly
+        # TODO: This code might be able to be written more cleanly
         # using Pandas split-apply-combine methods
         # group by scp... where count < 8, extrapolate
         '''
@@ -174,7 +172,7 @@ class WUDataFrame(DataFrame):
         pass
     
     def _make_datetime_col(self):
-        self.df['Weather Datetime'] = pd.to_datetime(self.df['DateUTC<br />'], format="%Y-%m-%d %H:%M:%S<br />") + timedelta(hours = 4) # needed to convert supplied datetimes to EDT
+        self.df['Weather Datetime'] = pd.to_datetime(self.df['DateUTC<br />'], format="%Y-%m-%d %H:%M:%S<br />") - timedelta(hours = 4) # needed to convert supplied datetimes to EDT
         return self
             
 ### TurnstileWeatherDataFrame class:
@@ -281,7 +279,7 @@ class TurnstileWeatherDataFrame(DataFrame): # TAKES IN PANDAS DATAFRAMES!
 class CleanedTWDataFrame(TurnstileWeatherDataFrame):
     def __init__(self, MTA_dataframe, WU_dataframe):
         TurnstileWeatherDataFrame.__init__(self, MTA_dataframe, WU_dataframe)
-        # self._delete_unneeded_cols()
+        # self._delete_unneeded_cols() # not needed anymore given _rearrange() definition
         self._rearrange()
     
     def _delete_unneeded_cols(self):
