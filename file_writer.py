@@ -52,7 +52,7 @@ class MTAMasterFileWriter(MasterFileWriter):
         for mta_ezlink in self._mta_ezlink_list.ezlink_list:
             f_ins.append(urlopen(mta_ezlink.url))
         
-        with open(self._filename, 'w') as master_file:
+        with open(self._filename, 'a') as master_file:
 
             last_lines = []
         
