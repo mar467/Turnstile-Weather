@@ -5,6 +5,19 @@ Created on Fri Nov 20 07:30:39 2015
 @author: moizr_000
 """
 
+'''
+The purpose of the following classes is to make obtaining a list of URL links
+for Metro Transit Authority data and Weather Underground data corresponding to
+a range of dates a straightforward process. Among things considered was that
+MTA data was provided on a weekly basis by Saturdays, with the week 
+corresponding to the seven days before that Saturday (not including that
+Satuday itself), whereas WU data was provided on a daily basis from 12:51 am
+to 11:51 pm. 
+
+The use of the "EasyDate" terminology was to avoid confusion with
+the "Date" class from the datetime module.
+'''
+
 from datetime import date, timedelta
 
 class Date(object): # responsibility: for Link classes
@@ -141,15 +154,3 @@ class WUEasyDateList(EasyDateList):
             
     def get_num_days(self):
         return len(self.date_list)
-        
-        
-'''
-date_min = Date(10, 11, 2015)
-date_max = Date(10, 31, 2015)
-
-MTA_dates = MTADateList(date_min, date_max)
-WU_dates = WUDateList(date_min, date_max)
-
-MTA_dates.get_date_list()
-WU_dates.get_date_list()
-'''

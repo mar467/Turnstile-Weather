@@ -5,6 +5,13 @@ Created on Fri Nov 20 09:31:18 2015
 @author: moizr_000
 """
 
+'''
+The purpose of the following classes is to construct a list of URL links for
+Metro Transit Authority data and Weather Underground data using the 
+EasyDateList classes from the tw_dates module (hence the retaining of the 
+"Easy" terminology).
+'''
+
 class EasyLink(object):
     def __init__(self):
         self.url = ""
@@ -40,7 +47,6 @@ class EasyLinkList(object): # NOT a link"ed" list, just a list of URL strings
     def __init__(self):
         self.ezlink_list = []
 
-        
 class MTAEasyLinkList(EasyLinkList):
     def __init__(self, mta_ezdate_list):
         EasyLinkList.__init__(self)
@@ -63,25 +69,3 @@ class WUEasyLinkList(EasyLinkList):
         for ezdate in self._list_of_ezdates:
             self.ezlink_list.append(WUEasyLink(ezdate, self._location))
         return self
-
-'''
-
-import datetime
-import dates
-
-dt_min = datetime.date(2015, 10, 11)
-dt_max = datetime.date(2015, 10, 31)
-
-ezdate_min = dates.EasyDate(dt_min)
-ezdate_max = dates.EasyDate(dt_max)
-
-MTA_ezdates = dates.MTAEasyDateList(ezdate_min, ezdate_max)
-WU_ezdates = dates.WUEasyDateList(ezdate_min, ezdate_max)
-
-MTA_ezlinks = links.MTAEasyLinkList(MTA_ezdates)
-WU_ezlinks = links.WUEasyLinkList(WU_ezdates)
-
-for ezlink in MTA_ezlinks.ezlink_list:
-    print ezlink.url
-    
-'''
