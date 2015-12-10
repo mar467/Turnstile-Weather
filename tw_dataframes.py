@@ -208,7 +208,7 @@ class TurnstileWeatherDataFrame(DataFrame): # TAKES IN PANDAS DATAFRAMES!
         prev_diff = datetime.max - datetime.min
         
         for row_idx, data_series in WU_df.iterrows():
-            new_diff = abs(datetime_obj - data_series['Weather Datetime'])
+            new_diff = abs(datetime_obj - timedelta(hours=4) - data_series['Weather Datetime'])
             if prev_diff < new_diff: # if local minima has just been passed
                 return row_idx-1 # return index location of minima
             prev_diff = new_diff # else, continue
@@ -235,7 +235,9 @@ class TurnstileWeatherDataFrame(DataFrame): # TAKES IN PANDAS DATAFRAMES!
         
         prev_wu_idx = start_of_wu_df # initialize 'where we last left off' index to start of WU_dataframe
         # prev_mta_dt necessary to know for when mta datetimes reach end of turnstile unit, and cycle over from first date     
-        prev_mta_dt = datetime.min # initialize to datetime smallest value to start
+        ''' CHANGE: initialize prev_mta_dt to first mta_dt - 4 hours instead of below: '''        
+        # prev_mta_dt = datetime.min # initialize to datetime smallest value to start
+        prev_mta_dt = MTA_df.iloc[0]['Subway Datetime'] - timedelta(hours=4)
         
         for mta_idx, data_series in MTA_df.iterrows():
             curr_mta_dt = data_series["Subway Datetime"]
@@ -244,10 +246,13 @@ class TurnstileWeatherDataFrame(DataFrame): # TAKES IN PANDAS DATAFRAMES!
             if(prev_mta_dt > curr_mta_dt):
                 # start over at beginning of WU_dataframe again
                 prev_wu_idx = start_of_wu_df
+                ''' NEW ADDITION: reset prev_mta_dt here '''
+                prev_mta_dt = curr_mta_dt - timedelta(hours=4)
             
             # note the .loc[prev_wu_idx:]
             # this has the effect of starting at where last left off in the WU_dataframe, to save time
-            closest_wu_idx = self._closest_wu_datetime(WU_df.loc[prev_wu_idx:], curr_mta_dt)
+            ''' CHANGE: use prev_mta_dt instead of curr_mta_dt '''            
+            closest_wu_idx = self._closest_wu_datetime(WU_df.loc[prev_wu_idx:], prev_mta_dt)
             
             closest_indexes[mta_idx] = closest_wu_idx
             
