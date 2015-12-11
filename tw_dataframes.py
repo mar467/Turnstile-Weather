@@ -63,11 +63,6 @@ class MTADataFrame(DataFrame):
         # TODO: This code might be able to be written more cleanly
         # using Pandas split-apply-combine methods
         # group by scp... where count < 8, extrapolate
-        '''
-        NOTE:
-        This code does not currently distinguish between different subway STATIONS
-        It assumes the dataframe only is for one subway station
-        '''
         
         def end_index_first_scp(df, zeroeth_index):
             first_scp = df.loc[zeroeth_index, 'Scp']
@@ -246,6 +241,7 @@ class TurnstileWeatherDataFrame(DataFrame): # TAKES IN PANDAS DATAFRAMES!
         start_of_wu_df = WU_df.index[0]
         
         prev_wu_idx = start_of_wu_df # initialize 'where we last left off' index to start of WU_dataframe
+        
         # prev_mta_dt necessary to know for when mta datetimes reach end of turnstile unit, and cycle over from first date     
         ''' CHANGE: initialize prev_mta_dt to first mta_dt - 4 hours instead of below: '''        
         # prev_mta_dt = datetime.min # initialize to datetime smallest value to start

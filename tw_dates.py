@@ -102,6 +102,9 @@ class WUEasyDate(EasyDate):
         
     def tomorrow(self): # returns new WUEasyDate object
         return WUEasyDate(self.get_tomorrow())
+        
+    def yesterday(self): # returns new WUEasyDate object
+        return WUEasyDate(self.get_yesterday())
     
 class EasyDateList(object):
     def __init__(self, ezdate_min, ezdate_max): # takes in two date objects
