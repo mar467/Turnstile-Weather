@@ -129,8 +129,7 @@ class MTADataFrame(DataFrame):
             station_df = self.df[self.df['Station']==station]
             new_df = self._combine_scps(station_df)
             new_df_list.append(new_df)
-        
-        print new_df_list[1]
+
         self.df = pd.concat(new_df_list, ignore_index=True)
         return self
     

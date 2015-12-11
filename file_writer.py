@@ -90,6 +90,8 @@ class MTAMasterFileWriter(MasterFileWriter):
                 f_in.close()
                 
     def _make_file(self):
+        with open(self._filename, 'w') as make_file_empty:
+            pass # figure out a better way to make file empty...
         write_header = True
         for station_name in self._station_names:
             self._write_one_station(station_name, write_header)
