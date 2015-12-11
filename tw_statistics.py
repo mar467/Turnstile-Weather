@@ -25,7 +25,7 @@ class CleanedDataFrame(object):
 
 class WrangledDataFrame(CleanedDataFrame):
     def __init__(self, turnstile_weather_df):
-        CleanedDataFrame.__init__(turnstile_weather_df)
+        CleanedDataFrame.__init__(self, turnstile_weather_df)
         
         self._make_timestamps()
         self._fill_nan_entries_exits()
@@ -127,16 +127,14 @@ class TailoredDataFrame(WrangledDataFrame):
         self._grouped = True
         return self
         
-    def only_workdays(self):
-        self.df = self.df[self.df['isWorkday']==1]
+    def workdays(self):
+        self.return_to_original()
+        self.df = self.df[self.df['isWorkday']==1 & self.df['isHoliday']==0]
         return self
         
-    def only_weekends(self):
-        self.df = self.df[self.df['isWorkday']==0]
-        return self
-        
-    def no_holidays(self):
-        self.df = self.df[self.df['isHoliday']==0]
+    def not_workdays(self):
+        self.return_to_original()
+        self.df = self.df[self.df['isWorkday']==0 | self.df['isHoliday']==1]
         return self
     
     def return_to_original(self):
@@ -218,8 +216,10 @@ class Explorer(TailoredDataFrame):
             without_cond = self.df["TemperatureF"]<mean
             
         elif selection == 'below freezing':
-            with_cond = self.df["TemperatureF"]<=32
-            without_cond = self.df[self.df["TemperatureF"]<=70]['TemperatureF']>32
+            selfdf = self.df[self.df["Month"].isin([9,10,11])]
+            mean = np.mean(selfdf["TemperatureF"])
+            with_cond = selfdf["TemperatureF"]>mean
+            without_cond = selfdf["TemperatureF"]<mean
             
         elif selection == 'humidity':
             mean = np.mean(self.df["Humidity"])
