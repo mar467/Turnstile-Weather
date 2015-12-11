@@ -69,8 +69,8 @@ class MTADataFrame(DataFrame):
         It assumes the dataframe only is for one subway station
         '''
         
-        def end_index_first_scp(df):
-            first_scp = df.loc[0, 'Scp']
+        def end_index_first_scp(df, zeroeth_index):
+            first_scp = df.loc[zeroeth_index, 'Scp']
             for row_idx, data_series in df.iterrows():
                 if data_series['Scp'] != first_scp:
                     return row_idx - 1
@@ -79,8 +79,9 @@ class MTADataFrame(DataFrame):
         
         scp_arr = old_df['Scp'].unique().tolist()
         
-        end_first_scp = end_index_first_scp(self.df)
-        new_df = old_df.loc[0:end_first_scp] # make a new df, consisting of only first scp in old_df
+        zeroeth_index = old_df.index[0]
+        end_first_scp = end_index_first_scp(old_df, zeroeth_index)
+        new_df = old_df.loc[zeroeth_index:end_first_scp] # make a new df, consisting of only first scp in old_df
 
         for row_idx, data_series in new_df.iterrows():
             # dataframe consisting of the data for all scps for a given date
@@ -128,8 +129,9 @@ class MTADataFrame(DataFrame):
             station_df = self.df[self.df['Station']==station]
             new_df = self._combine_scps(station_df)
             new_df_list.append(new_df)
-            
-        self.df = pd.concat(new_df_list)
+        
+        print new_df_list[1]
+        self.df = pd.concat(new_df_list, ignore_index=True)
         return self
     
     def _make_hourly_entries_col(self):
