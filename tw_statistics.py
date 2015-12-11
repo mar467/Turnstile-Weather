@@ -13,9 +13,20 @@ import scipy.stats
 from ggplot import *
 from datetime import datetime, timedelta
 
-class WrangledDataFrame(object):
+class CleanedDataFrame(object):
     def __init__(self, turnstile_weather_df):
         self.df = turnstile_weather_df
+        self._rearrange()
+        
+    def _rearrange(self):
+        cols = ['Subway Datetime', 'Weather Datetime', 'Station', 'Entries', 'Exits', 'Entries Per Hour', 'Exits Per Hour', 'Date', 'Month', 'Hour', 'DayOfWeek', 'isWorkday', 'isHoliday', 'TemperatureF', 'Dew PointF', 'Humidity', 'Sea Level PressureIn', 'Wind SpeedMPH', 'Gust SpeedMPH', 'Wind Direction', 'WindDirDegrees', 'VisibilityMPH', 'PrecipitationIn', 'Events', 'Conditions']
+        self.df = self.df.reindex(columns = cols)
+        return self
+
+class WrangledDataFrame(CleanedDataFrame):
+    def __init__(self, turnstile_weather_df):
+        CleanedDataFrame.__init__(turnstile_weather_df)
+        
         self._make_timestamps()
         self._fill_nan_entries_exits()
         self._replace_calm_windspeeds()
@@ -67,7 +78,7 @@ class WrangledDataFrame(object):
         
     def _interpolation(self):
         # NOTE: wind speed interpolated, despite fact that it can vary drastically between 4 hour periods
-        cols = ['TemperatureF', 'Dew PointF', 'Humidity', 'Sea Level PressureIn', 'VisibilityMPH', 'Wind SpeedMPH']
+        cols = ['TemperatureF', 'Dew PointF', 'Humidity', 'Sea Level PressureIn', 'VisibilityMPH'] #, 'Wind SpeedMPH']
         for col in cols:        
             self.df.loc[:,col].interpolate(inplace=True)
         self.df.loc[:,"Wind SpeedMPH"].interpolate(inplace=True)
@@ -120,6 +131,10 @@ class TailoredDataFrame(WrangledDataFrame):
         self.df = self.df[self.df['isWorkday']==1]
         return self
         
+    def only_weekends(self):
+        self.df = self.df[self.df['isWorkday']==0]
+        return self
+        
     def no_holidays(self):
         self.df = self.df[self.df['isHoliday']==0]
         return self
@@ -147,6 +162,22 @@ class Explorer(TailoredDataFrame):
             with_cond = self.df["Events"]=='Rain'
             without_cond = self.df["Events"]!='Rain'
             
+        elif selection == 'test':
+            with_cond = self.df["Conditions"].isin(['Light Rain', 'Haze', 'Rain', 'Light Snow', 'Heavy Rain', 'Snow', 'Light Freezing Rain', 'Heavy Snow', 'Mist'])
+            without_cond = self.df["Conditions"]=='Clear'
+            
+        elif selection == 'test2':
+            with_cond = self.df["Conditions"].isin(['Mostly Cloudy', 'Overcast', 'Partly Cloudy', 'Scattered Clouds'])
+            without_cond = self.df["Conditions"].isin(['Light Rain', 'Haze', 'Rain', 'Light Snow', 'Heavy Rain', 'Snow', 'Light Freezing Rain', 'Heavy Snow', 'Mist'])
+
+        elif selection == 'test3': 
+            with_cond = self.df["Conditions"].isin(['Mostly Cloudy', 'Overcast', 'Partly Cloudy', 'Scattered Clouds'])
+            without_cond = self.df["Conditions"]=='Clear'
+            
+        elif selection == 'test4':
+            with_cond = self.df["Conditions"].isin(['Light Rain', 'Haze''Rain', 'Light Snow', 'Heavy Rain', 'Snow', 'Light Freezing Rain', 'Heavy Snow', 'Mist'])
+            without_cond = with_cond==False
+            
         elif selection == 'snow':
             with_cond = self.df["Events"]=='Snow'
             without_cond = self.df["Events"]!='Snow'
@@ -156,7 +187,7 @@ class Explorer(TailoredDataFrame):
             without_cond = self.df["Conditions"]!=skies
             
         elif selection == 'extreme weather':
-            with_cond = self.df["Conditions"].isin(['Haze', 'Snow', 'Heavy Snow', 'Heavy Rain'])
+            with_cond = self.df["Conditions"].isin(['Snow', 'Heavy Snow', 'Rain', 'Heavy Rain'])
             without_cond = with_cond==False
             
         elif selection == 'visibility':
@@ -177,17 +208,18 @@ class Explorer(TailoredDataFrame):
             without_cond = self.df["WindDirDegrees"]!=0
       
         elif selection == 'precipitation':
-            with_cond = self.df["PrecipitationIn"]>0.08
+            with_cond = self.df["PrecipitationIn"]>0
             without_cond = self.df["PrecipitationIn"]==0
             
         elif selection == 'temperature':
+            # self.df = self.df[self.df["Month"].isin([11,12,1,2,3])]
             mean = np.mean(self.df["TemperatureF"])
             with_cond = self.df["TemperatureF"]>mean
             without_cond = self.df["TemperatureF"]<mean
             
         elif selection == 'below freezing':
             with_cond = self.df["TemperatureF"]<=32
-            without_cond = self.df["TemperatureF"]>=70
+            without_cond = self.df[self.df["TemperatureF"]<=70]['TemperatureF']>32
             
         elif selection == 'humidity':
             mean = np.mean(self.df["Humidity"])
@@ -200,8 +232,8 @@ class Explorer(TailoredDataFrame):
             without_cond = self.df["Sea Level PressureIn"]<mean
             
         elif selection == 'summer vs. winter':
-            with_cond = self.df["Month"].isin([6,7,8])
-            without_cond = self.df["Month"].isin([12,1,2])
+            with_cond = self.df["Month"].isin([7,8,9])
+            without_cond = self.df["Month"].isin([1,2])
             
         else:
             print 'Not a valid selection.'
@@ -227,7 +259,7 @@ class Explorer(TailoredDataFrame):
         cond = self.df[with_cond]['Entries Per Hour']
         no_cond = self.df[without_cond]['Entries Per Hour']
         cond_mean = np.mean(cond)
-        no_cond_mean = np.mean(no_cond)
+        no_cond_mean = np.mean(no_cond)    
         
         U, p = scipy.stats.mannwhitneyu(cond, no_cond, use_continuity=True)
         return (cond.size, cond_mean), (no_cond.size, no_cond_mean), U, p
@@ -286,14 +318,18 @@ class GradientDescentPredictor(WrangledDataFrame):
     def create_features_df(self):
         ''' All the features that can be included in predicting '''
         fts = self.df[[]]
-        dummy_weekend_hours = pd.get_dummies(self.df[self.df['isWorkday']==0]['Hour'], prefix='weekend hour: ')
-        dummy_weekday_hours = pd.get_dummies(self.df[self.df['isWorkday']==1]['Hour'], prefix='weekday hour: ')
-        # dummy_hours = pd.get_dummies(self.df['Hour'], prefix='hour: ')
-        dummy_months = pd.get_dummies(self.df['Month'], prefix='month: ')
-        dummy_daysofweek = pd.get_dummies(self.df['DayOfWeek'], prefix='weekday: ')       
-        datetime_fts = self.df[['Hour', 'isWorkday', 'isHoliday']]
-        datetime_fts = datetime_fts.join([dummy_weekend_hours, dummy_weekday_hours, dummy_months, dummy_daysofweek])
-        # datetime_fts = self.df[['Hour', 'Month', 'DayOfWeek', 'isWorkday', 'isHoliday']]
+        
+        dummy_hours_by_day = self.df[[]]
+        days_of_week = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+        for i in range(len(days_of_week)):
+            dummies = pd.get_dummies(self.df[self.df['DayOfWeek']==i]['Hour'], prefix=days_of_week[i]+' hour: ')
+            dummy_hours_by_day = dummy_hours_by_day.join([dummies])
+        dummy_hours_by_day = dummy_hours_by_day.fillna(0)
+        
+        dummy_months = pd.get_dummies(self.df['Month'], prefix='month: ') 
+        
+        datetime_fts = self.df[['isHoliday']].join([dummy_hours_by_day, dummy_months])
+
         dummy_subway_stations = pd.get_dummies(self.df['Station'])
         major_weather_fts = self.df[['TemperatureF', 'Dew PointF', 'Humidity', 'Sea Level PressureIn']]
         minor_weather_fts = self.df[['VisibilityMPH', 'Gusts', 'PrecipitationIn', 'WindDirDegrees']]
@@ -302,8 +338,6 @@ class GradientDescentPredictor(WrangledDataFrame):
         
         ''' Which features are going to be included in predicting '''             
         features =  fts.join([datetime_fts, major_weather_fts, minor_weather_fts, dummy_conditions, dummy_events]) # change this, as fitting
-        features = features.fillna(0) # for dummy weekend/weekday hours        
-        features.to_csv('curious.csv')   # DELETE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         features = self._normalize_features(features)
         features['ones'] = np.ones(len(dummy_months)) # y-intercept
         

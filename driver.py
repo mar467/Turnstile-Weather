@@ -26,12 +26,12 @@ import file_writer
 import tw_dataframes as dataframes
 
 class Driver(object):
-    def __init__(self, (start_month, start_day, start_year), (end_month, end_day, end_year), station_name="42 ST-TIMES SQ", filename="turnstile_weather.csv"):
+    def __init__(self, (start_month, start_day, start_year), (end_month, end_day, end_year), station_names=["42 ST-TIMES SQ"], filename="turnstile_weather.csv"):
         self._make_start_end_dates((start_month, start_day, start_year), (end_month, end_day, end_year))
-        self.station_name = station_name      
+        self.station_names = station_names      
         MTA_dataframe = self._make_MTA_dataframe()
         WU_dataframe = self._make_WU_dataframe()
-        master_dataframe = dataframes.CleanedTWDataFrame(MTA_dataframe, WU_dataframe)
+        master_dataframe = dataframes.TurnstileWeatherDataFrame(MTA_dataframe, WU_dataframe)    
         self.df = master_dataframe.df
         self._write_to_csv(filename)
 
@@ -45,11 +45,11 @@ class Driver(object):
     def _make_MTA_dataframe(self):
         MTA_ezdates = dates.MTAEasyDateList(self._ezdate_min, self._ezdate_max)
         MTA_ezlinks = links.MTAEasyLinkList(MTA_ezdates)
-        MTA_master_file = file_writer.MTAMasterFileWriter(MTA_ezlinks, station_name=self.station_name)
+        MTA_master_file = file_writer.MTAMasterFileWriter(MTA_ezlinks, station_names=self.station_names)
         return dataframes.MTADataFrame(MTA_master_file.get_path())
         
     def _make_WU_dataframe(self):
-        WU_ezdates = dates.WUEasyDateList(self._ezdate_min, self._ezdate_max)
+        WU_ezdates = dates.WUEasyDateList(self._ezdate_min, self._ezdate_max, start_yesterday=True)
         WU_ezlinks = links.WUEasyLinkList(WU_ezdates)
         WU_master_file = file_writer.WUMasterFileWriter(WU_ezlinks)
         return dataframes.WUDataFrame(WU_master_file.get_path())
@@ -57,14 +57,19 @@ class Driver(object):
     def _write_to_csv(self, filename):
         self.df.to_csv(filename)
         return self
-        
-        
-csv1_maker = Driver((11,23,2014), (5,1,2015), station_name="42 ST-TIMES SQ", filename="TSQ1.csv")
-csv2_maker = Driver((5,3,2015), (11,27,2015), station_name="42 ST-TIMES SQ", filename="TSQ2.csv")
+ 
+
+test = Driver((11, 23, 2015), (11, 24, 2015), station_names=["LEXINGTON AVE", "42 ST-TIMES SQ"], filename="test456.csv")
+# grand_central = Driver((10,30,2015), (11,1,2015), station_names=["42 ST-TIMES SQ"], filename="testing123.csv")
+'''
+csv1_maker = Driver((11, 23, 2014), (5, 1, 2015), station_names=["42 ST-TIMES SQ"], filename="TSQ1.csv")
+csv2_maker = Driver((5, 4, 2015), (11, 27, 2015), station_names=["42 ST-TIMES SQ"], filename="TSQ2.csv")
 master_df = pd.concat([csv1_maker.df, csv2_maker.df], ignore_index=True)
-master_df.to_csv('turnstile_weather.csv')
+master_df.to_csv('turnstile_weather_-4.csv')
+'''
+
 # GO FROM 11,23,2014 to 11,27,2015. Works excellently for Times Square
-# Grand Central, however, only works after 12,6. So do 12,7
+# Grand Central, however, only works after 12,6. So do 12,7 42 ST-GRD CNTRL
 '''
 IMPORTANT NOTE: Time Square Station Turnstile Unit 01-00-07 loses all its data on 11/21/2014 @ 15:00:00
 http://web.mta.info/developers/data/nyct/turnstile/turnstile_141122.txt

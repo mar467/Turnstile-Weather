@@ -287,23 +287,3 @@ class TurnstileWeatherDataFrame(DataFrame): # TAKES IN PANDAS DATAFRAMES!
         upd_wu_df = self._updated_weather_df(WU_df, MTA_df)
         self.df = pd.concat([MTA_dataframe.df, upd_wu_df], axis=1)
         return self
-
-
-class CleanedTWDataFrame(TurnstileWeatherDataFrame):
-    def __init__(self, MTA_dataframe, WU_dataframe):
-        TurnstileWeatherDataFrame.__init__(self, MTA_dataframe, WU_dataframe)
-        # self._delete_unneeded_cols() # not needed anymore given _rearrange() definition
-        self._rearrange()
-    
-    def _delete_unneeded_cols(self):
-        # depending on date range, will either be TimeEST or TimeEDT
-        ch = 'S'
-        if 'TimeEDT' in self.df.columns:
-            ch = 'D'
-        self.df = self.df.drop(['Date', 'Time', 'C/A', 'Unit', 'Scp', 'Linename', 'Division', 'DateUTC<br />', 'TimeE'+ch+'T'], 1)
-        return self
-
-    def _rearrange(self):
-        cols = ['Subway Datetime', 'Weather Datetime', 'Station', 'Entries', 'Exits', 'Entries Per Hour', 'Exits Per Hour', 'Date', 'Month', 'Hour', 'DayOfWeek', 'isWorkday', 'isHoliday', 'TemperatureF', 'Dew PointF', 'Humidity', 'Sea Level PressureIn', 'Wind SpeedMPH', 'Gust SpeedMPH', 'Wind Direction', 'WindDirDegrees', 'VisibilityMPH', 'PrecipitationIn', 'Events', 'Conditions']
-        self.df = self.df.reindex(columns = cols)
-        return self
