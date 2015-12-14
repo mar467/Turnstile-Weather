@@ -5,6 +5,18 @@ Created on Mon Nov 23 11:11:28 2015
 @author: moizr_000
 """
 
+'''
+The purpose of the following classes is to merge an MTA and WU dataframe into
+a master turnstile-weather dataframe with all the major structural features
+necessary for analysis. The MTADataFrame class does the brunt of this work,
+by summing all turnstile entries and exits in a given station for every audit 
+event, then calculating entries and exits per hour using the cumulative data.
+The TurnstileWeatherDataFrame class is responsible for merging this dataframe
+and the weather underground dataframe together by pairing each entries or exits
+per hour entry with the weather event that occured at the audit event just 
+prior to it.
+'''
+
 # a note on terminology:
 # 'df' is used to refer to a pandas.DataFrame object
 # 'dataframe' is used to refer to the object created by these classes
@@ -197,7 +209,6 @@ class TurnstileWeatherDataFrame(DataFrame): # TAKES IN PANDAS DATAFRAMES!
     def __init__(self, MTA_dataframe, WU_dataframe):
         DataFrame.__init__(self)
         self._merge_dataframes(MTA_dataframe, WU_dataframe)
-        self._rearrange()
         
     # the first helper method in executing merge of MTA_ and WU_dataframes
     # returns index location of closest weather datetime given a datetime object
