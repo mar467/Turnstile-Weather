@@ -13,20 +13,16 @@ import scipy.stats
 from ggplot import *
 from datetime import datetime, timedelta
 
-class CleanedDataFrame(object):
+# explorer
+# explorer.wrangle()
+# explorer.workdays()
+
+class WrangledDataFrame(object):
     def __init__(self, turnstile_weather_df):
         self.df = turnstile_weather_df
-        self._rearrange()
+        self.wrangled = False
         
-    def _rearrange(self):
-        cols = ['Subway Datetime', 'Weather Datetime', 'Station', 'Entries', 'Exits', 'Entries Per Hour', 'Exits Per Hour', 'Date', 'Month', 'Hour', 'DayOfWeek', 'isWorkday', 'isHoliday', 'TemperatureF', 'Dew PointF', 'Humidity', 'Sea Level PressureIn', 'Wind SpeedMPH', 'Gust SpeedMPH', 'Wind Direction', 'WindDirDegrees', 'VisibilityMPH', 'PrecipitationIn', 'Events', 'Conditions']
-        self.df = self.df.reindex(columns = cols)
-        return self
-
-class WrangledDataFrame(CleanedDataFrame):
-    def __init__(self, turnstile_weather_df):
-        CleanedDataFrame.__init__(self, turnstile_weather_df)
-        
+    def wrangle(self):
         self._make_timestamps()
         self._fill_nan_entries_exits()
         self._replace_calm_windspeeds()
@@ -36,6 +32,9 @@ class WrangledDataFrame(CleanedDataFrame):
         self._make_neg9999s_nans()
         self._interpolation()
         self._near_holidays()
+        # self._make_temperature_var_col()
+        
+        self.wrangled=True
         
     def _make_timestamps(self):
         self.df['Subway Datetime'] = pd.to_datetime(self.df['Subway Datetime'])
@@ -107,6 +106,26 @@ class WrangledDataFrame(CleanedDataFrame):
         
         return self
         
+    '''
+    def _make_temperature_var_col(self, pct_diff = 10):
+        self.df["Temperature Var"] = pd.Series(0, index=self.df.index)
+        
+        temp_df = self.df.groupby("Date", as_index=False).mean()
+        prev_temp = temp_df.loc[0, "TemperatureF"]
+        
+        for row_idx, data_series in temp_df.iterrows():
+            diff = (data_series["TemperatureF"] - prev_temp)/(prev_temp)*100.0
+            
+            if diff > pct_diff:
+                self.df[self.df["Date"]==data_series["Date"]].loc[:, "Temperature Var"] = 1
+            if diff > -pct_diff:
+                self.df[self.df["Date"]==data_series["Date"]].loc[:, "Temperature Var"] = -1        
+                
+            prev_temp = data_series["TemperatureF"]
+            
+        return self
+    '''
+
 
 class TailoredDataFrame(WrangledDataFrame):
     def __init__(self, turnstile_weather_df):
@@ -116,25 +135,26 @@ class TailoredDataFrame(WrangledDataFrame):
         
     def include_predictions(self, predictions):
         if self._grouped:
-            print "Ungroup dataframe first by returning to original."
-            return
+            self.return_to_original()
         predictions = np.asarray(predictions, np.float64)
         self.df['Predictions'] = pd.Series(predictions, index=self.df.index)             
         return self
         
-    def group_by(self, col='Date'):
-        self.df = self.df.groupby(col, as_index=False).mean()
+    def group_by_date(self):
+        self.df = self.df.groupby('Date', as_index=False).mean()
         self._grouped = True
         return self
         
-    def workdays(self):
-        self.return_to_original()
-        self.df = self.df[self.df['isWorkday']==1 & self.df['isHoliday']==0]
+    def workdays(self, make_original=True):
+        if make_original:
+            self.return_to_original()
+        self.df = self.df[(self.df['isWorkday']==1) & (self.df['isHoliday']==0)]
         return self
         
-    def not_workdays(self):
-        self.return_to_original()
-        self.df = self.df[self.df['isWorkday']==0 | self.df['isHoliday']==1]
+    def not_workdays(self, make_original=True):
+        if make_original:
+            self.return_to_original()
+        self.df = self.df[(self.df['isWorkday']==0) | (self.df['isHoliday']==1)]
         return self
     
     def return_to_original(self):
@@ -147,45 +167,29 @@ class Explorer(TailoredDataFrame):
     def __init__(self, turnstile_weather_df):
         TailoredDataFrame.__init__(self, turnstile_weather_df)
         
-    def _condition(self, selection, skies):
+    def _condition(self, selection):
         ''' 
-        skies:
+        conditions:
             ['Clear', 'Mostly Cloudy', 'Overcast', 'Partly Cloudy',
              'Scattered Clouds', 'Light Rain', 'Haze', 'Rain', 'Light Snow',
              'Heavy Rain', 'Snow', 'Light Freezing Rain', 'Unknown',
              'Heavy Snow', 'Mist']
         '''
-             
+        
         if selection == 'rain':
             with_cond = self.df["Events"]=='Rain'
             without_cond = self.df["Events"]!='Rain'
-            
-        elif selection == 'test':
-            with_cond = self.df["Conditions"].isin(['Light Rain', 'Haze', 'Rain', 'Light Snow', 'Heavy Rain', 'Snow', 'Light Freezing Rain', 'Heavy Snow', 'Mist'])
-            without_cond = self.df["Conditions"]=='Clear'
-            
-        elif selection == 'test2':
-            with_cond = self.df["Conditions"].isin(['Mostly Cloudy', 'Overcast', 'Partly Cloudy', 'Scattered Clouds'])
-            without_cond = self.df["Conditions"].isin(['Light Rain', 'Haze', 'Rain', 'Light Snow', 'Heavy Rain', 'Snow', 'Light Freezing Rain', 'Heavy Snow', 'Mist'])
-
-        elif selection == 'test3': 
-            with_cond = self.df["Conditions"].isin(['Mostly Cloudy', 'Overcast', 'Partly Cloudy', 'Scattered Clouds'])
-            without_cond = self.df["Conditions"]=='Clear'
-            
-        elif selection == 'test4':
-            with_cond = self.df["Conditions"].isin(['Light Rain', 'Haze''Rain', 'Light Snow', 'Heavy Rain', 'Snow', 'Light Freezing Rain', 'Heavy Snow', 'Mist'])
-            without_cond = with_cond==False
             
         elif selection == 'snow':
             with_cond = self.df["Events"]=='Snow'
             without_cond = self.df["Events"]!='Snow'
             
-        elif selection == 'skies': # needs to catch potential errors with skies
-            with_cond = self.df["Conditions"]==skies
-            without_cond = self.df["Conditions"]!=skies
+        elif selection == 'cloudy': 
+            with_cond = self.df["Conditions"].isin(['Mostly Cloudy', 'Overcast', 'Partly Cloudy', 'Scattered Clouds'])
+            without_cond = self.df["Conditions"]=='Clear'
             
-        elif selection == 'extreme weather':
-            with_cond = self.df["Conditions"].isin(['Snow', 'Heavy Snow', 'Rain', 'Heavy Rain'])
+        elif selection == 'haze and mist':
+            with_cond = self.df["Conditions"].isin(['Haze', 'Mist'])
             without_cond = with_cond==False
             
         elif selection == 'visibility':
@@ -200,26 +204,15 @@ class Explorer(TailoredDataFrame):
         elif selection == 'gusts':
             with_cond = self.df["Gusts"]==1
             without_cond = self.df["Gusts"]==0
-            
-        elif selection == 'wind direction':
-            with_cond = self.df["WindDirDegrees"]==0
-            without_cond = self.df["WindDirDegrees"]!=0
       
         elif selection == 'precipitation':
             with_cond = self.df["PrecipitationIn"]>0
             without_cond = self.df["PrecipitationIn"]==0
             
         elif selection == 'temperature':
-            # self.df = self.df[self.df["Month"].isin([11,12,1,2,3])]
             mean = np.mean(self.df["TemperatureF"])
             with_cond = self.df["TemperatureF"]>mean
             without_cond = self.df["TemperatureF"]<mean
-            
-        elif selection == 'below freezing':
-            selfdf = self.df[self.df["Month"].isin([9,10,11])]
-            mean = np.mean(selfdf["TemperatureF"])
-            with_cond = selfdf["TemperatureF"]>mean
-            without_cond = selfdf["TemperatureF"]<mean
             
         elif selection == 'humidity':
             mean = np.mean(self.df["Humidity"])
@@ -231,10 +224,6 @@ class Explorer(TailoredDataFrame):
             with_cond = self.df["Sea Level PressureIn"]>mean
             without_cond = self.df["Sea Level PressureIn"]<mean
             
-        elif selection == 'summer vs. winter':
-            with_cond = self.df["Month"].isin([7,8,9])
-            without_cond = self.df["Month"].isin([1,2])
-            
         else:
             print 'Not a valid selection.'
             with_cond = self.df["Events"]=='Rain'
@@ -242,19 +231,22 @@ class Explorer(TailoredDataFrame):
             
         return with_cond, without_cond
         
-    def plot_entries_histogram(self, selection='rain', skies='Clear', opposite=False):
+    def plot_entries_histogram(self, selection='rain', opposite=False):
         if opposite:
-            without_cond, with_cond = self._condition(selection, skies)
+            without_cond, with_cond = self._condition(selection)
         else:
-            with_cond, without_cond = self._condition(selection, skies)
+            with_cond, without_cond = self._condition(selection)
         
         plt.figure()
         self.df[with_cond]['Entries Per Hour'].hist()
         self.df[without_cond]['Entries Per Hour'].hist()
+        plt.xlabel('Entries Per Hour')
+        plt.ylabel('Frequency')
+        plt.title('Entries/Hr Distributions for Two Different Conditions')
         return plt
         
-    def mann_whitney_plus_means(self, selection='rain', skies='Clear'):
-        with_cond, without_cond = self._condition(selection, skies)
+    def mann_whitney_plus_means(self, selection='rain'):
+        with_cond, without_cond = self._condition(selection)
         
         cond = self.df[with_cond]['Entries Per Hour']
         no_cond = self.df[without_cond]['Entries Per Hour']
@@ -275,6 +267,9 @@ class Visualizer(TailoredDataFrame):
 
     def comparison_plot(self, first_col_name='Entries Per Hour', second_col_name='Predictions'):
         plot = self.df[[first_col_name, second_col_name]].plot()
+        plot.set_xlabel("Date")
+        plot.set_ylabel("Average Entries/Hr")
+        plot.set_title("Predicted vs. Expected Entries Per Hour by Date)
         return plot
    
      
@@ -404,7 +399,10 @@ class GradientDescentPredictor(WrangledDataFrame):
             return        
         plt.figure()
         differences = self.values - self.predictions
-        differences.hist(bins=range(-1000, 1500, 100))
+        differences.hist(bins=range(-500, 500, 25))
+        plt.title('Residual Plot for alpha = %.3f' % self.alpha )
+        plt.xlabel('Residuals')
+        plt.ylabel('Frequency')
         return plt
         
     def calculate_r_squared(self):
