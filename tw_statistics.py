@@ -44,9 +44,9 @@ from datetime import datetime, timedelta
 class WrangledDataFrame(object):
     def __init__(self, turnstile_weather_df):
         self.df = turnstile_weather_df
-        self.wrangled = False
+        self._wrangle()
         
-    def wrangle(self):
+    def _wrangle(self):
         self._make_timestamps()
         self._fill_nan_entries_exits()
         self._replace_calm_windspeeds()
@@ -57,8 +57,6 @@ class WrangledDataFrame(object):
         self._interpolation()
         self._near_holidays()
         # self._make_temperature_var_col()
-        
-        self.wrangled=True
         
     def _make_timestamps(self):
         self.df['Subway Datetime'] = pd.to_datetime(self.df['Subway Datetime'])
@@ -174,6 +172,13 @@ class TailoredDataFrame(WrangledDataFrame):
         if make_original or self._tailored:
             self.return_to_original()
         self.df = self.df[self.df['isWorkday']==1]
+        self._tailored = True
+        return self
+        
+    def weekends_only(self, make_original=True):
+        if make_original or self._tailored:
+            self.return_to_original()
+        self.df = self.df[self.df['isWorkday']==0]
         self._tailored = True
         return self
         
@@ -299,6 +304,20 @@ class Visualizer(TailoredDataFrame):
     def plot(self, x_col_name='Date', y_col_name='Entries Per Hour'):
         self.group_by(x_col_name)
         plot = ggplot(aes(x=x_col_name, y=y_col_name), data=self.df) + geom_line(color='red') + ggtitle('Average '+y_col_name+' vs. '+x_col_name)
+        return plot
+        
+    def hourly_bar_plot(self,):
+        regular_hours = (self.df.groupby('Hour').count()['Entries Per Hour']>2)
+        plot = self.df.groupby('Hour').mean()[regular_hours][['Entries Per Hour']].plot(kind='bar')
+        plot.set_ylabel('Average Entries Per Hour')
+        plot.set_title('Average Entries Per Hour by Hour')
+        return plot
+        
+    def daily_bar_plot(self):
+        plot = self.df.groupby('DayOfWeek').mean()[['Entries Per Hour']].plot(kind='bar')
+        plot.set_xlabel('Day of Week (0 = Monday)')
+        plot.set_ylabel('Average Entries Per Hour')
+        plot.set_title('Average Entries Per Hour by Day of Week')
         return plot
 
     def comparison_plot(self, first_col_name='Entries Per Hour', second_col_name='Predictions', grouping=None):
