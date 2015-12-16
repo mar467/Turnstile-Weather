@@ -13,9 +13,33 @@ import scipy.stats
 from ggplot import *
 from datetime import datetime, timedelta
 
-# explorer
+# df = pd.read_csv('')
+
+# visualizer = Visualizer(df)
+# visualizer.wrangle()
+# visualizer.plot('Date', 'Entries Per Hour')
+# visualizer.weekdays_only().plot('Date', 'Entries Per Hour')
+# visualizer.workdays_only().plot('Date', 'Entries Per Hour')
+
+# explorer = Explorer(df)
 # explorer.wrangle()
-# explorer.workdays()
+# explorer.workdays_only().plot_entries_histogram('cloudy vs clear skies')
+# explorer.workdays_only().mann_whitney_plus_means('cloudy vs clear skies')
+# explorer.non_workdays_only().plot_entries_histogram('cloudy vs clear skies')
+# explorer.non_workdays_only().mann_whitney_plus_means('cloudy vs clear skies')
+
+# predictor = GradientDescentPredictor(df)
+# predictor.wrangle()
+# predictor.make_predictions()
+# predictor.plot_cost_history()
+# predictor.plot_residuals()
+# predictor.calculate_r_squared()
+
+# visualizer.include_predictions(predictor.predictions)
+# visualizer.comparison_plot()
+# visualizer.weekdays_only().comparison_plot()
+
+
 
 class WrangledDataFrame(object):
     def __init__(self, turnstile_weather_df):
@@ -132,34 +156,45 @@ class TailoredDataFrame(WrangledDataFrame):
         WrangledDataFrame.__init__(self, turnstile_weather_df)
         self._original = self.df
         self._grouped = False
+        self._tailored = False
         
     def include_predictions(self, predictions):
-        if self._grouped:
+        if self._grouped or self._tailored:
             self.return_to_original()
         predictions = np.asarray(predictions, np.float64)
         self.df['Predictions'] = pd.Series(predictions, index=self.df.index)             
         return self
         
-    def group_by_date(self):
-        self.df = self.df.groupby('Date', as_index=False).mean()
+    def group_by(self, category='Date'):
+        self.df = self.df.groupby(category, as_index=False).mean()
         self._grouped = True
         return self
         
-    def workdays(self, make_original=True):
-        if make_original:
+    def weekdays_only(self, make_original=True):
+        if make_original or self._tailored:
             self.return_to_original()
-        self.df = self.df[(self.df['isWorkday']==1) & (self.df['isHoliday']==0)]
+        self.df = self.df[self.df['isWorkday']==1]
+        self._tailored = True
         return self
         
-    def not_workdays(self, make_original=True):
-        if make_original:
+    def workdays_only(self, make_original=True):
+        if make_original or self._tailored:
+            self.return_to_original()
+        self.df = self.df[(self.df['isWorkday']==1) & (self.df['isHoliday']==0)]
+        self._tailored = True
+        return self
+        
+    def non_workdays_only(self, make_original=True):
+        if make_original or self._tailored:
             self.return_to_original()
         self.df = self.df[(self.df['isWorkday']==0) | (self.df['isHoliday']==1)]
+        self._tailored = True
         return self
     
     def return_to_original(self):
         self.df = self._original
         self._grouped = False
+        self._tailored = False
         return self
 
 
@@ -184,7 +219,7 @@ class Explorer(TailoredDataFrame):
             with_cond = self.df["Events"]=='Snow'
             without_cond = self.df["Events"]!='Snow'
             
-        elif selection == 'cloudy': 
+        elif selection == 'cloudy vs clear skies': 
             with_cond = self.df["Conditions"].isin(['Mostly Cloudy', 'Overcast', 'Partly Cloudy', 'Scattered Clouds'])
             without_cond = self.df["Conditions"]=='Clear'
             
@@ -262,14 +297,24 @@ class Visualizer(TailoredDataFrame):
         TailoredDataFrame.__init__(self, turnstile_weather_df)
 
     def plot(self, x_col_name='Date', y_col_name='Entries Per Hour'):
-        plot = ggplot(aes(x=x_col_name, y=y_col_name), data=self.df) + geom_line(color='red')
+        self.group_by(x_col_name)
+        plot = ggplot(aes(x=x_col_name, y=y_col_name), data=self.df) + geom_line(color='red') + ggtitle('Average '+y_col_name+' vs. '+x_col_name)
         return plot
 
-    def comparison_plot(self, first_col_name='Entries Per Hour', second_col_name='Predictions'):
+    def comparison_plot(self, first_col_name='Entries Per Hour', second_col_name='Predictions', grouping=None):
+
+        if grouping is None:
+            grouping_name='Audit event'
+            average = ''
+        else:
+            self.group_by(grouping)
+            grouping_name=grouping
+            average = 'Average '
+            
         plot = self.df[[first_col_name, second_col_name]].plot()
-        plot.set_xlabel("Date")
-        plot.set_ylabel("Average Entries/Hr")
-        plot.set_title("Predicted vs. Expected Entries Per Hour by Date)
+        plot.set_xlabel(grouping_name)
+        plot.set_ylabel(average+first_col_name)
+        plot.set_title('Predicted vs. Expected '+first_col_name+' by '+grouping_name)
         return plot
    
      
@@ -314,16 +359,29 @@ class GradientDescentPredictor(WrangledDataFrame):
         ''' All the features that can be included in predicting '''
         fts = self.df[[]]
         
+        # self.df["Hour"] = self.df["Hour"].apply(lambda x: 0 if x==23 else x + x%2)
+        
         dummy_hours_by_day = self.df[[]]
+        linearized_hours = self.df[[]]
+        
         days_of_week = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
         for i in range(len(days_of_week)):
-            dummies = pd.get_dummies(self.df[self.df['DayOfWeek']==i]['Hour'], prefix=days_of_week[i]+' hour: ')
+            curr_weekday_df = self.df[self.df['DayOfWeek']==i]
+            
+            dummies = pd.get_dummies(curr_weekday_df['Hour'], prefix=days_of_week[i]+' hour: ')
             dummy_hours_by_day = dummy_hours_by_day.join([dummies])
+            
+            avg_hrly_entries = curr_weekday_df.groupby('Hour').mean()['Entries Per Hour']
+            hr_max = avg_hrly_entries.idxmax() # hour of max number of average entries/hr
+            hr_min = avg_hrly_entries.idxmin() # hour of min number of average entries/hr
+            linearized_hours[days_of_week[i]+' lin hour'] = curr_weekday_df['Hour'].apply(lambda hr: (hr-hr_max) if (hr>hr_max) else abs(hr-hr_min))
+            
         dummy_hours_by_day = dummy_hours_by_day.fillna(0)
+        linearized_hours = linearized_hours.fillna(0)
         
         dummy_months = pd.get_dummies(self.df['Month'], prefix='month: ') 
         
-        datetime_fts = self.df[['isHoliday']].join([dummy_hours_by_day, dummy_months])
+        datetime_fts = self.df[['isHoliday']].join([dummy_hours_by_day, dummy_months, linearized_hours])
 
         dummy_subway_stations = pd.get_dummies(self.df['Station'])
         major_weather_fts = self.df[['TemperatureF', 'Dew PointF', 'Humidity', 'Sea Level PressureIn']]
@@ -385,7 +443,7 @@ class GradientDescentPredictor(WrangledDataFrame):
         return self
             
     def plot_cost_history(self):
-        if self.cost_history == None:
+        if self.cost_history is None:
             print "Run make_predictions() first."
             return
         iteration = range(len(self.cost_history))
@@ -394,7 +452,7 @@ class GradientDescentPredictor(WrangledDataFrame):
         return plot
         
     def plot_residuals(self):
-        if self.predictions == None:
+        if self.predictions is None:
             print "Make predictions first."
             return        
         plt.figure()
@@ -406,7 +464,7 @@ class GradientDescentPredictor(WrangledDataFrame):
         return plt
         
     def calculate_r_squared(self):
-        if self.predictions == None:
+        if self.predictions is None:
             print "Make predictions first."
             return        
         r_squared = 1 - (np.square(self.values - self.predictions).sum())/(np.square(self.values - np.mean(self.values)).sum())
