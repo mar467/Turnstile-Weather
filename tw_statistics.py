@@ -16,7 +16,7 @@ from datetime import datetime, timedelta
 '''
 The purpose of the following classes are to wrangle, analyze, visualize, and
 model the csv dataset created from previous modules. The sample code below
-demonstrates its implementation.
+demonstrates their implementation.
 
 ################################ SAMPLE CODE: ################################
 
