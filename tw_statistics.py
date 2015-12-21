@@ -13,33 +13,54 @@ import scipy.stats
 from ggplot import *
 from datetime import datetime, timedelta
 
-# df = pd.read_csv('')
+'''
+The purpose of the following classes are to wrangle, analyze, visualize, and
+model the csv dataset created from previous modules. The sample code below
+demonstrates its implementation.
 
-# visualizer = Visualizer(df)
-# visualizer.wrangle()
-# visualizer.plot('Date', 'Entries Per Hour')
-# visualizer.weekdays_only().plot('Date', 'Entries Per Hour')
-# visualizer.workdays_only().plot('Date', 'Entries Per Hour')
+################################ SAMPLE CODE: ################################
 
-# explorer = Explorer(df)
-# explorer.wrangle()
-# explorer.workdays_only().plot_entries_histogram('cloudy vs clear skies')
-# explorer.workdays_only().mann_whitney_plus_means('cloudy vs clear skies')
-# explorer.non_workdays_only().plot_entries_histogram('cloudy vs clear skies')
-# explorer.non_workdays_only().mann_whitney_plus_means('cloudy vs clear skies')
+df = pd.read_csv('turnstile_weather.csv')
 
-# predictor = GradientDescentPredictor(df)
-# predictor.wrangle()
-# predictor.make_predictions()
-# predictor.plot_cost_history()
-# predictor.plot_residuals()
-# predictor.calculate_r_squared()
+visualizer = Visualizer(df)
+print visualizer.plot('Date', 'Entries Per Hour')
+print visualizer.weekdays_only().plot('Date', 'Entries Per Hour')
+print visualizer.workdays_only().plot('Date', 'Entries Per Hour')
+print visualizer.weekends_only().plot('Date', 'Entries Per Hour')
 
-# visualizer.include_predictions(predictor.predictions)
-# visualizer.comparison_plot()
-# visualizer.weekdays_only().comparison_plot()
+explorer = Explorer(df)
+explorer.plot_entries_histogram('cloudy vs clear skies', opposite=True)
+print explorer.mann_whitney_plus_means('cloudy vs clear skies')
+explorer.workdays_only().plot_entries_histogram('cloudy vs clear skies')
+print explorer.workdays_only().mann_whitney_plus_means('cloudy vs clear skies')
+explorer.non_workdays_only().plot_entries_histogram('cloudy vs clear skies')
+print explorer.non_workdays_only().mann_whitney_plus_means('cloudy vs clear skies')
 
+predictor = GradientDescentPredictor(df)
+predictor.make_predictions('Entries Per Hour')
+#print predictor.plot_cost_history()
+#predictor.plot_residuals()
+print predictor.calculate_r_squared()
 
+visualizer.include_predictions(predictor.predictions)
+visualizer.comparison_plot(grouping='Date')
+visualizer.weekdays_only().comparison_plot(grouping='Date')
+visualizer.workdays_only().comparison_plot(grouping='Date')
+visualizer.weekends_only().comparison_plot(grouping='Date')
+
+last_two_weeks_df = pd.read_csv('last_two_weeks.csv')
+
+last_two_weeks_predictor = GradientDescentPredictor(last_two_weeks_df)
+last_two_weeks_predictor.make_predictions_with_thetas(predictor)
+predictions = last_two_weeks_predictor.predictions
+
+last_two_weeks_visualizer = Visualizer(last_two_weeks_df)
+last_two_weeks_visualizer.include_predictions(predictions)
+last_two_weeks_visualizer.comparison_plot()
+print last_two_weeks_predictor.calculate_r_squared()
+
+##############################################################################
+'''
 
 class WrangledDataFrame(object):
     def __init__(self, turnstile_weather_df):
@@ -306,12 +327,25 @@ class Visualizer(TailoredDataFrame):
         plot = ggplot(aes(x=x_col_name, y=y_col_name), data=self.df) + geom_line(color='red') + ggtitle('Average '+y_col_name+' vs. '+x_col_name)
         return plot
         
-    def hourly_bar_plot(self,):
+    def hourly_bar_plot(self):
         regular_hours = (self.df.groupby('Hour').count()['Entries Per Hour']>2)
         plot = self.df.groupby('Hour').mean()[regular_hours][['Entries Per Hour']].plot(kind='bar')
         plot.set_ylabel('Average Entries Per Hour')
         plot.set_title('Average Entries Per Hour by Hour')
         return plot
+        
+    '''
+    def multiple(self):
+        regular_hours = (self.df.groupby('Hour').count()['Exits Per Hour']>2)
+        df1=self.workdays_only().df.groupby('Hour').mean()[regular_hours][['Exits Per Hour']]
+        df1.rename(columns={'Exits Per Hour':'Workday Exits Per Hour'}, inplace=True)
+        df2=self.non_workdays_only().df.groupby('Hour').mean()[regular_hours][['Exits Per Hour']]
+        df2.rename(columns={'Exits Per Hour':'Non-Workday Exits Per Hour'}, inplace=True)
+        plot=df1.join(df2).plot(kind='bar')
+        plot.set_ylabel('Average Exits Per Hour')
+        plot.set_title('Average Exits Per Hour by Hour')
+        return plot
+    '''
         
     def daily_bar_plot(self):
         plot = self.df.groupby('DayOfWeek').mean()[['Entries Per Hour']].plot(kind='bar')
@@ -393,13 +427,14 @@ class GradientDescentPredictor(WrangledDataFrame):
             avg_hrly_entries = curr_weekday_df.groupby('Hour').mean()['Entries Per Hour']
             hr_max = avg_hrly_entries.idxmax() # hour of max number of average entries/hr
             hr_min = avg_hrly_entries.idxmin() # hour of min number of average entries/hr
-            linearized_hours[days_of_week[i]+' lin hour'] = curr_weekday_df['Hour'].apply(lambda hr: (hr-hr_max) if (hr>hr_max) else abs(hr-hr_min))
+            linearized_hours[days_of_week[i]+' lin hour'] = curr_weekday_df['Hour'].apply(lambda hr: (hr-hr_max)**3.3 if (hr>hr_max) else abs(hr-hr_min)**3.3) # treating it as ~cube-root helps slightly
             
         dummy_hours_by_day = dummy_hours_by_day.fillna(0)
         linearized_hours = linearized_hours.fillna(0)
         
         dummy_months = pd.get_dummies(self.df['Month'], prefix='month: ') 
         
+        # self.df['isWorkday'] = abs(self.df['isHoliday']-1)*self.df['isWorkday'] # changing isWorkday (which is actually isWeekday) to actually isWorkday
         datetime_fts = self.df[['isHoliday']].join([dummy_hours_by_day, dummy_months, linearized_hours])
 
         dummy_subway_stations = pd.get_dummies(self.df['Station'])

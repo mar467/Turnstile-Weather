@@ -65,12 +65,18 @@ class Driver(object):
     def write_to_csv(self, filename="turnstile_weather.csv"):
         self.df.to_csv(filename)
         return self
-        
+    
+'''
+last_two_weeks_dr = Driver((11, 27, 2015), (12, 11, 2015), station_names=["42 ST-TIMES SQ"])
+last_two_weeks_dr.execute()
+last_two_weeks_dr.write_to_csv(filename="last_two_weeks.csv")
+'''
+    
 ### 
         # SAMPLE CODE:
-        # last_two_weeks_dr = Driver((11, 27, 2015), (12, 11, 2015), station_names=["LEXINGTON AVE", "42 ST-TIMES SQ", "42 ST-GRD CNTRL"])
-        # last_two_weeks_dr.execute()
-        # last_two_weeks_dr.write_to_csv(filename="last_two_weeks.csv")
+        # last_three_weeks_dr = Driver((11, 27, 2015), (12, 11, 2015), station_names=["LEXINGTON AVE", "42 ST-TIMES SQ", "42 ST-GRD CNTRL"])
+        # last_three_weeks_dr.execute()
+        # last_three_weeks_dr.write_to_csv(filename="last_two_weeks.csv")
 ###
     
 # TODO: throw an error if dates provided are not chronological
